@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Golf Practice Session Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      padding: 24px 24px 18px;
+      max-width: 520px;
+      width: 100%;
+      border: 1px solid rgba(148,163,184,0.4);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.5rem;
+      font-weight: 650;
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-bottom: 16px;
+    }
+
+    .summary {
+      background: radial-gradient(circle at top left, #0ea5e9 0, transparent 55%),
+                  radial-gradient(circle at bottom right, #22c55e 0, transparent 55%),
+                  #020617;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 1px solid rgba(148,163,184,0.5);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    .summary-label {
+      color: #cbd5f5;
+      opacity: 0.9;
+    }
+
+    .summary-value {
+      font-weight: 600;
+      color: #f9fafb;
+    }
+
+    .summary-notes-label {
+      font-size: 0.8rem;
+      color: #cbd5f5;
+      opacity: 0.75;
+      margin-top: 4px;
+    }
+
+    .summary-notes {
+      font-size: 0.85rem;
+      color: #e5e7eb;
+      max-height: 4.2em;
+      overflow-y: auto;
+      padding-right: 4px;
+      white-space: pre-wrap;
+    }
+
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #e5e7eb;
+    }
+
+    .section-title small {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      font-weight: 500;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.6);
+    }
+
+    .timer-display {
+      margin-top: 8px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(22,163,74,0.08));
+      border: 1px solid rgba(56,189,248,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-feature-settings: "tnum" 1, "lnum" 1;
+    }
+
+    .timer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .timer-label {
+      font-size: 0.8rem;
+      color: #cbd5f5;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .timer-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #f9fafb;
+    }
+
+    .timer-sub {
+      font-size: 0.8rem;
+      color: #d1d5db;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border-radius: 9999px;
+      border: none;
+      padding: 9px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.06s ease, box-shadow 0.06s ease, background 0.12s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #022c22;
+      box-shadow: 0 10px 25px rgba(22,163,74,0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(22,163,74,0.45);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(22,163,74,0.28);
+    }
+
+    .btn-secondary {
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      border: 1px solid rgba(148,163,184,0.7);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(15,23,42,1);
+    }
+
+    .btn-secondary:disabled,
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .small-link {
+      font-size: 0.8rem;
+      color: #f97316;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .small-link:hover {
+      color: #fdba74;
+    }
+
+    .footer-note {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .overlay.active {
+      display: flex;
+    }
+
+    .overlay-card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 20px 20px 16px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(148,163,184,0.8);
+    }
+
+    .overlay-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.2rem;
+    }
+
+    .overlay-card p {
+      margin: 0 0 12px;
+      font-size: 0.9rem;
+      color: #d1d5db;
+    }
+
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 90px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.6);
+    }
+
+    .overlay-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .muted {
+      color: #9ca3af;
+      font-size: 0.8rem;
+    }
+
+    .quick-setup-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .quick-setup-grid > div:last-child {
+      text-align: right;
+    }
+
+    .drills-grid {
+      margin-top: 8px;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 16px;
+      }
+      .card {
+        padding: 18px 16px 14px;
+      }
+      .quick-setup-grid {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+      .quick-setup-grid > div:last-child {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Golf Practice Timer</h1>
+    <div class="subtitle">Quick 4-part session with notes & ball tracking.</div>
+
+    <div class="summary">
+      <div class="summary-row">
+        <span class="summary-label">Lifetime balls tracked</span>
+        <span class="summary-value" id="total-balls">0</span>
+      </div>
+      <div class="summary-notes-label">Most recent session notes</div>
+      <div class="summary-notes" id="last-notes">
+        No notes yet — finish a session to add some reflections.
+      </div>
+    </div>
+
+    <!-- Quick setup -->
+    <div class="section">
+      <div class="section-title">
+        <span>Quick setup</span>
+        <small>Warm-up 2 min, Full swings 3 min</small>
+      </div>
+      <div class="quick-setup-grid">
+        <div>
+          <label for="total-mins">Total session length (minutes)</label>
+          <input type="number" id="total-mins" min="5" step="1" value="15" />
+        </div>
+        <div>
+          <label for="num-drills">Number of drills</label>
+          <input type="number" id="num-drills" min="1" step="1" value="2" />
+        </div>
+        <div>
+          <button id="auto-fill-btn" class="btn-secondary" type="button">Auto-fill sections</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span>Session layout</span>
+        <small>You can still edit these manually</small>
+      </div>
+
+      <!-- Warm-up + full swings row -->
+      <div class="grid">
+        <div>
+          <label for="warmup-mins">Warm-up (minutes)</label>
+          <input type="number" id="warmup-mins" min="0" step="1" value="3" />
+        </div>
+        <div>
+          <label for="full-mins">Full swings (minutes)</label>
+          <input type="number" id="full-mins" min="0" step="1" value="4" />
+        </div>
+      </div>
+
+      <!-- Dynamic drills grid -->
+      <div class="section">
+        <label>Drills (minutes)</label>
+        <div id="drills-grid" class="grid drills-grid"></div>
+      </div>
+
+      <div class="timer-display" id="timer-panel" style="display:none;">
+        <div class="timer-row">
+          <div class="timer-label">Current section</div>
+          <div class="timer-value" id="current-section-name">–</div>
+        </div>
+        <div class="timer-row">
+          <div class="timer-label">Time remaining</div>
+          <div class="timer-value" id="time-remaining">00:00</div>
+        </div>
+        <div class="timer-sub" id="next-section-label">
+          Next: –
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="start-btn" class="btn-primary">Start session</button>
+      <button id="pause-btn" class="btn-secondary" disabled>Pause</button>
+      <button id="stop-btn" class="btn-secondary" disabled>Stop</button>
+      <span class="small-link" id="reset-balls-link">Reset ball count</span>
+    </div>
+    <div class="footer-note">
+      Settings are saved only in this browser via local storage.
+    </div>
+  </div>
+
+  <div class="overlay" id="session-end-overlay">
+    <div class="overlay-card">
+      <h2>Session complete!</h2>
+      <p>Nice work. Log your balls and any quick notes so future you remembers what today felt like.</p>
+      <div class="section">
+        <label for="balls-hit-input">Balls hit this session</label>
+        <input type="number" id="balls-hit-input" min="0" step="1" value="0" />
+      </div>
+      <div class="section">
+        <label for="notes-input">Notes / feedback</label>
+        <textarea id="notes-input" placeholder="What went well? What should you focus on next time?"></textarea>
+      </div>
+      <div class="overlay-actions">
+        <button class="btn-secondary" id="skip-log-btn">Skip</button>
+        <button class="btn-primary" id="save-log-btn">Save</button>
+      </div>
+      <div class="muted">You can always see your most recent notes on the main screen.</div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const totalBallsEl = document.getElementById('total-balls');
+      const lastNotesEl = document.getElementById('last-notes');
+
+      const totalMinsInput = document.getElementById('total-mins');
+      const numDrillsInput = document.getElementById('num-drills');
+      const autoFillBtn = document.getElementById('auto-fill-btn');
+
+      const warmupInput = document.getElementById('warmup-mins');
+      const fullInput = document.getElementById('full-mins');
+
+      const drillsGrid = document.getElementById('drills-grid');
+      let drillInputs = [];
+
+      const timerPanel = document.getElementById('timer-panel');
+      const currentSectionNameEl = document.getElementById('current-section-name');
+      const timeRemainingEl = document.getElementById('time-remaining');
+      const nextSectionLabelEl = document.getElementById('next-section-label');
+
+      const startBtn = document.getElementById('start-btn');
+      const pauseBtn = document.getElementById('pause-btn');
+      const stopBtn = document.getElementById('stop-btn');
+      const resetBallsLink = document.getElementById('reset-balls-link');
+
+      const overlay = document.getElementById('session-end-overlay');
+      const ballsHitInput = document.getElementById('balls-hit-input');
+      const notesInput = document.getElementById('notes-input');
+      const saveLogBtn = document.getElementById('save-log-btn');
+      const skipLogBtn = document.getElementById('skip-log-btn');
+
+      const STORAGE_TOTAL_BALLS = 'golfPracticeTotalBalls';
+      const STORAGE_LAST_NOTES = 'golfPracticeLastNotes';
+
+      let timerId = null;
+      let sectionsRuntime = [];
+      let currentSectionIndex = 0;
+      let sectionEndTimestamp = 0;
+      let sessionRunning = false;
+      let isPaused = false;
+      let pausedRemainingSec = 0;
+
+      function loadPersistentData() {
+        const storedBalls = localStorage.getItem(STORAGE_TOTAL_BALLS);
+        const storedNotes = localStorage.getItem(STORAGE_LAST_NOTES);
+
+        if (storedBalls !== null && !isNaN(parseInt(storedBalls, 10))) {
+          totalBallsEl.textContent = parseInt(storedBalls, 10);
+        } else {
+          totalBallsEl.textContent = '0';
+        }
+
+        if (storedNotes && storedNotes.trim() !== '') {
+          lastNotesEl.textContent = storedNotes;
+        } else {
+          lastNotesEl.textContent = 'No notes yet — finish a session to add some reflections.';
+        }
+      }
+
+      function saveTotals(ballsToAdd, newNotes) {
+        const currentTotal = parseInt(localStorage.getItem(STORAGE_TOTAL_BALLS), 10) || 0;
+        const updatedTotal = currentTotal + (ballsToAdd || 0);
+        localStorage.setItem(STORAGE_TOTAL_BALLS, String(updatedTotal));
+        totalBallsEl.textContent = updatedTotal;
+
+        if (newNotes && newNotes.trim() !== '') {
+          localStorage.setItem(STORAGE_LAST_NOTES, newNotes.trim());
+          lastNotesEl.textContent = newNotes.trim();
+        }
+      }
+
+      function formatSeconds(sec) {
+        const s = Math.max(0, Math.floor(sec));
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        const mm = String(m).padStart(2, '0');
+        const ss = String(r).padStart(2, '0');
+        return mm + ':' + ss;
+      }
+
+      let sharedAudioContext = null;
+
+      function playChime() {
+        try {
+          if (!window.AudioContext && !window.webkitAudioContext) {
+            return;
+          }
+          if (!sharedAudioContext) {
+            sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+          }
+
+          const ctx = sharedAudioContext;
+          const now = ctx.currentTime;
+
+          // Longer, more noticeable chime (about 1.2s)
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, now);
+          osc.frequency.linearRampToValueAtTime(1200, now + 0.7);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          gain.gain.setValueAtTime(0.9, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+
+          osc.start(now);
+          osc.stop(now + 1.2);
+        } catch (e) {
+          console.warn('Unable to play chime:', e);
+        }
+      }
+
+      function rebuildDrillInputs(count) {
+        drillsGrid.innerHTML = '';
+        drillInputs = [];
+
+        if (count < 1 || isNaN(count)) {
+          count = 1;
+        }
+
+        for (let i = 0; i < count; i++) {
+          const wrapper = document.createElement('div');
+          const label = document.createElement('label');
+          label.textContent = 'Drill ' + (i + 1) + ' (minutes)';
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.min = '0';
+          input.step = '1';
+          input.value = '0';
+
+          label.appendChild(input);
+          wrapper.appendChild(label);
+          drillsGrid.appendChild(wrapper);
+          drillInputs.push(input);
+        }
+      }
+
+      function updateTimerDisplay() {
+        if (!sessionRunning || sectionsRuntime.length === 0 || isPaused) return;
+
+        const now = Date.now();
+        const remainingMs = sectionEndTimestamp - now;
+        const remainingSec = Math.ceil(remainingMs / 1000);
+
+        if (remainingSec <= 0) {
+          skipSection();
+          return;
+        }
+
+        const currentSection = sectionsRuntime[currentSectionIndex];
+        currentSectionNameEl.textContent = currentSection.name;
+        timeRemainingEl.textContent = formatSeconds(remainingSec);
+
+        const nextIndex = currentSectionIndex + 1;
+        if (nextIndex < sectionsRuntime.length) {
+          nextSectionLabelEl.textContent = 'Next: ' + sectionsRuntime[nextIndex].name;
+        } else {
+          nextSectionLabelEl.textContent = 'Next: Session complete';
+        }
+      }
+
+      function beginSection() {
+        const currentSection = sectionsRuntime[currentSectionIndex];
+        const durationMs = currentSection.durationSec * 1000;
+
+        sectionEndTimestamp = Date.now() + durationMs;
+
+        currentSectionNameEl.textContent = currentSection.name;
+        timeRemainingEl.textContent = formatSeconds(currentSection.durationSec);
+
+        const nextIndex = currentSectionIndex + 1;
+        if (nextIndex < sectionsRuntime.length) {
+          nextSectionLabelEl.textContent = 'Next: ' + sectionsRuntime[nextIndex].name;
+        } else {
+          nextSectionLabelEl.textContent = 'Next: Session complete';
+        }
+
+        if (timerId) {
+          clearInterval(timerId);
+        }
+        timerId = setInterval(updateTimerDisplay, 250);
+      }
+
+      function skipSection() {
+        playChime();
+
+        currentSectionIndex += 1;
+        if (currentSectionIndex >= sectionsRuntime.length) {
+          endSession(true);
+          return;
+        }
+
+        isPaused = false;
+        pausedRemainingSec = 0;
+
+        beginSection();
+      }
+
+      function startSession() {
+        if (sessionRunning) return;
+
+        const durations = [];
+
+        const warmMin = parseFloat(warmupInput.value) || 0;
+        if (warmMin > 0) {
+          durations.push({ name: 'Warm-up', minutes: warmMin });
+        }
+
+        drillInputs.forEach((input, idx) => {
+          const val = parseFloat(input.value) || 0;
+          if (val > 0) {
+            durations.push({ name: 'Drill ' + (idx + 1), minutes: val });
+          }
+        });
+
+        const fullMin = parseFloat(fullInput.value) || 0;
+        if (fullMin > 0) {
+          durations.push({ name: 'Full swings', minutes: fullMin });
+        }
+
+        const totalMinutes = durations.reduce((sum, d) => sum + d.minutes, 0);
+
+        if (totalMinutes <= 0) {
+          alert('Please set at least one section to a duration greater than zero.');
+          return;
+        }
+
+        sectionsRuntime = durations.map(d => ({
+          name: d.name,
+          durationSec: Math.round(d.minutes * 60)
+        }));
+
+        currentSectionIndex = 0;
+        sessionRunning = true;
+        isPaused = false;
+        pausedRemainingSec = 0;
+
+        timerPanel.style.display = 'block';
+
+        startBtn.textContent = 'Skip section';
+        startBtn.classList.remove('btn-primary');
+        startBtn.classList.add('btn-secondary');
+
+        pauseBtn.disabled = false;
+        pauseBtn.textContent = 'Pause';
+        stopBtn.disabled = false;
+        warmupInput.disabled = true;
+        fullInput.disabled = true;
+        drillInputs.forEach(input => input.disabled = true);
+        totalMinsInput.disabled = true;
+        numDrillsInput.disabled = true;
+        autoFillBtn.disabled = true;
+
+        beginSection();
+        playChime();
+      }
+
+      function handleStartOrSkip() {
+        if (!sessionRunning) {
+          startSession();
+        } else {
+          skipSection();
+        }
+      }
+
+      function pauseOrResumeSession() {
+        if (!sessionRunning) return;
+
+        if (!isPaused) {
+          const now = Date.now();
+          const remainingMs = sectionEndTimestamp - now;
+          pausedRemainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+
+          if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+          }
+
+          isPaused = true;
+          pauseBtn.textContent = 'Resume';
+        } else {
+          if (pausedRemainingSec <= 0) {
+            skipSection();
+            return;
+          }
+
+          sectionEndTimestamp = Date.now() + pausedRemainingSec * 1000;
+          isPaused = false;
+          pauseBtn.textContent = 'Pause';
+
+          if (!timerId) {
+            timerId = setInterval(updateTimerDisplay, 250);
+          }
+        }
+      }
+
+      function endSession(triggerOverlay) {
+        if (!sessionRunning) return;
+
+        sessionRunning = false;
+        isPaused = false;
+        pausedRemainingSec = 0;
+
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+        }
+
+        startBtn.textContent = 'Start session';
+        startBtn.classList.remove('btn-secondary');
+        startBtn.classList.add('btn-primary');
+
+        pauseBtn.disabled = true;
+        pauseBtn.textContent = 'Pause';
+        stopBtn.disabled = true;
+        warmupInput.disabled = false;
+        fullInput.disabled = false;
+        drillInputs.forEach(input => input.disabled = false);
+        totalMinsInput.disabled = false;
+        numDrillsInput.disabled = false;
+        autoFillBtn.disabled = false;
+
+        nextSectionLabelEl.textContent = 'Next: –';
+        currentSectionNameEl.textContent = '–';
+        timeRemainingEl.textContent = '00:00';
+
+        playChime();
+
+        if (triggerOverlay) {
+          ballsHitInput.value = '0';
+          notesInput.value = '';
+          overlay.classList.add('active');
+        }
+      }
+
+      function stopSessionManually() {
+        if (!sessionRunning) return;
+        const proceed = confirm('Stop the current session? Progress will not be logged automatically.');
+        if (!proceed) return;
+        endSession(false);
+      }
+
+      function handleSaveLog() {
+        const ballsRaw = ballsHitInput.value.trim();
+        const balls = ballsRaw === '' ? 0 : parseInt(ballsRaw, 10);
+        const notes = notesInput.value;
+
+        if (ballsRaw !== '' && (isNaN(balls) || balls < 0)) {
+          alert('Please enter a valid number of balls (0 or more).');
+          return;
+        }
+
+        saveTotals(balls, notes);
+        overlay.classList.remove('active');
+      }
+
+      function handleSkipLog() {
+        overlay.classList.remove('active');
+      }
+
+      function resetBallCount() {
+        const confirmed = confirm('Reset the total ball count to 0? This cannot be undone.');
+        if (!confirmed) return;
+        localStorage.setItem(STORAGE_TOTAL_BALLS, '0');
+        totalBallsEl.textContent = '0';
+      }
+
+      function autoFillSections() {
+        let total = parseInt(totalMinsInput.value, 10);
+        let drills = parseInt(numDrillsInput.value, 10);
+
+        if (isNaN(total) || total < 5) {
+          alert('Total session length should be at least 5 minutes (2 warm-up + 3 full swings).');
+          return;
+        }
+
+        if (isNaN(drills) || drills < 1) {
+          drills = 1;
+          numDrillsInput.value = 1;
+        }
+
+        rebuildDrillInputs(drills);
+
+        const warmupDefault = 2;
+        const fullDefault = 3;
+        const baseRequired = warmupDefault + fullDefault;
+
+        if (total < baseRequired) {
+          alert('Total time must be at least 5 minutes (2 warm-up + 3 full swings).');
+          return;
+        }
+
+        const remaining = total - baseRequired;
+        const perDrillBase = Math.floor(remaining / drills);
+        const remainder = remaining % drills;
+
+        warmupInput.value = warmupDefault;
+        fullInput.value = fullDefault;
+
+        drillInputs.forEach((input, idx) => {
+          let minutes = perDrillBase;
+          if (idx < remainder) minutes += 1;
+          input.value = minutes;
+        });
+      }
+
+      startBtn.addEventListener('click', handleStartOrSkip);
+      pauseBtn.addEventListener('click', pauseOrResumeSession);
+      stopBtn.addEventListener('click', stopSessionManually);
+      resetBallsLink.addEventListener('click', resetBallCount);
+      saveLogBtn.addEventListener('click', handleSaveLog);
+      skipLogBtn.addEventListener('click', handleSkipLog);
+      autoFillBtn.addEventListener('click', autoFillSections);
+
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+
+      // Rebuild drills whenever number changes (but without auto-filling)
+      numDrillsInput.addEventListener('change', function() {
+        let n = parseInt(numDrillsInput.value, 10);
+        if (isNaN(n) || n < 1) {
+          n = 1;
+          numDrillsInput.value = 1;
+        }
+        rebuildDrillInputs(n);
+      });
+
+      // Initial drills (2 drills by default)
+      rebuildDrillInputs(parseInt(numDrillsInput.value, 10) || 2);
+      loadPersistentData();
+    })();
+  </script>
+</body>
+</html>

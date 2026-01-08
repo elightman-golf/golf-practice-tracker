@@ -2,895 +2,383 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Golf Practice Session Tracker</title>
+  <title>Practice Caddie - v5</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
+      --bg-main: #0a0f1d;
+      --bg-card: #111827;
+      --accent-green: #10b981;
+      --accent-blue: #0ea5e9;
+      --accent-red: #ef4444;
+      --accent-gold: #fbbf24;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: rgba(255, 255, 255, 0.1);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
     body {
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 24px;
+      margin: 0; background: var(--bg-main); color: var(--text-main);
+      display: flex; justify-content: center; padding: 20px; line-height: 1.5; min-height: 100vh;
     }
 
+    .container { max-width: 480px; width: 100%; }
+
     .card {
-      background: #020617;
-      border-radius: 16px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-      padding: 24px 24px 18px;
-      max-width: 520px;
-      width: 100%;
-      border: 1px solid rgba(148,163,184,0.4);
+      background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border);
+      padding: 24px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
     h1 {
-      margin: 0 0 4px;
-      font-size: 1.5rem;
-      font-weight: 650;
-      letter-spacing: 0.03em;
+      font-size: 1.25rem; font-weight: 700; margin: 0;
+      background: linear-gradient(to right, #fff, #9ca3af);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    .subtitle {
-      font-size: 0.9rem;
-      color: #9ca3af;
-      margin-bottom: 16px;
+    .badge {
+      font-size: 0.7rem; padding: 2px 8px; border-radius: 6px;
+      background: rgba(16, 185, 129, 0.1); color: var(--accent-green); font-weight: 700;
     }
 
-    .summary {
-      background: radial-gradient(circle at top left, #0ea5e9 0, transparent 55%),
-                  radial-gradient(circle at bottom right, #22c55e 0, transparent 55%),
-                  #020617;
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      border: 1px solid rgba(148,163,184,0.5);
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .stat-box {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px; text-align: center;
+    }
+    .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .stat-value { font-size: 1.1rem; font-weight: 700; color: white; }
+
+    .input-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; color: var(--text-muted); }
+
+    input[type="number"], input[type="text"], textarea {
+      width: 100%; background: #0a0f1d; border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 12px; color: white; font-size: 1rem; box-sizing: border-box;
     }
 
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.95rem;
+    .timer-container {
+      background: #000; border-radius: 16px; padding: 32px 24px; text-align: center;
+      position: relative; overflow: hidden; border: 1px solid var(--accent-blue); margin-bottom: 16px;
     }
 
-    .summary-label {
-      color: #cbd5f5;
-      opacity: 0.9;
+    .progress-bar {
+      position: absolute; bottom: 0; left: 0; height: 6px; background: var(--accent-blue);
+      width: 100%; transition: width 0.25s linear;
     }
 
-    .summary-value {
-      font-weight: 600;
-      color: #f9fafb;
-    }
+    .time-large { font-size: 4rem; font-weight: 800; font-variant-numeric: tabular-nums; margin: 8px 0; }
 
-    .summary-notes-label {
-      font-size: 0.8rem;
-      color: #cbd5f5;
-      opacity: 0.75;
-      margin-top: 4px;
+    .btn {
+      width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;
     }
+    .btn-primary { background: var(--accent-green); color: #064e3b; }
+    .btn-secondary { background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); }
+    .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
 
-    .summary-notes {
-      font-size: 0.85rem;
-      color: #e5e7eb;
-      max-height: 4.2em;
-      overflow-y: auto;
-      padding-right: 4px;
-      white-space: pre-wrap;
-    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    .section {
-      margin-bottom: 16px;
+    .star-rating {
+      display: flex; flex-direction: row-reverse; justify-content: center; gap: 8px; margin: 12px 0;
     }
-
-    .section-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: #e5e7eb;
-    }
-
-    .section-title small {
-      font-size: 0.8rem;
-      color: #9ca3af;
-      font-weight: 500;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px 16px;
-    }
-
-    label {
-      font-size: 0.8rem;
-      color: #9ca3af;
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    input[type="number"] {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px solid rgba(148,163,184,0.7);
-      background: #020617;
-      color: #e5e7eb;
-      font-size: 0.9rem;
-      outline: none;
-    }
-
-    input[type="number"]:focus {
-      border-color: #0ea5e9;
-      box-shadow: 0 0 0 1px rgba(14,165,233,0.6);
-    }
-
-    .timer-display {
-      margin-top: 8px;
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(22,163,74,0.08));
-      border: 1px solid rgba(56,189,248,0.3);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-feature-settings: "tnum" 1, "lnum" 1;
-    }
-
-    .timer-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-    }
-
-    .timer-label {
-      font-size: 0.8rem;
-      color: #cbd5f5;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .timer-value {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #f9fafb;
-    }
-
-    .timer-sub {
-      font-size: 0.8rem;
-      color: #d1d5db;
-    }
-
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 16px;
-      margin-bottom: 4px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      border-radius: 9999px;
-      border: none;
-      padding: 9px 16px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.06s ease, box-shadow 0.06s ease, background 0.12s ease;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #022c22;
-      box-shadow: 0 10px 25px rgba(22,163,74,0.35);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 30px rgba(22,163,74,0.45);
-    }
-
-    .btn-primary:active {
-      transform: translateY(0);
-      box-shadow: 0 8px 18px rgba(22,163,74,0.28);
-    }
-
-    .btn-secondary {
-      background: rgba(15,23,42,0.9);
-      color: #e5e7eb;
-      border: 1px solid rgba(148,163,184,0.7);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(15,23,42,1);
-    }
-
-    .btn-secondary:disabled,
-    .btn-primary:disabled {
-      opacity: 0.6;
-      cursor: default;
-      box-shadow: none;
-      transform: none;
-    }
-
-    .small-link {
-      font-size: 0.8rem;
-      color: #f97316;
-      cursor: pointer;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
-    .small-link:hover {
-      color: #fdba74;
-    }
-
-    .footer-note {
-      font-size: 0.75rem;
-      color: #6b7280;
-      margin-top: 4px;
-      text-align: right;
-    }
+    .star-rating input { display: none; }
+    .star-rating label { font-size: 2.5rem; color: #334155; cursor: pointer; transition: color 0.1s; }
+    .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: var(--accent-gold); }
 
     .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15,23,42,0.85);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+    }
+    .overlay.active { display: flex; }
+    .overlay-card { 
+      background: var(--bg-card); border-radius: 20px; padding: 24px; width: 100%; 
+      max-width: 400px; border: 1px solid var(--border); max-height: 80vh; overflow-y: auto;
     }
 
-    .overlay.active {
-      display: flex;
-    }
-
-    .overlay-card {
-      background: #020617;
-      border-radius: 16px;
-      padding: 20px 20px 16px;
-      max-width: 420px;
-      width: 100%;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-      border: 1px solid rgba(148,163,184,0.8);
-    }
-
-    .overlay-card h2 {
-      margin: 0 0 8px;
-      font-size: 1.2rem;
-    }
-
-    .overlay-card p {
-      margin: 0 0 12px;
-      font-size: 0.9rem;
-      color: #d1d5db;
-    }
-
-    textarea {
-      width: 100%;
-      box-sizing: border-box;
-      min-height: 90px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(148,163,184,0.7);
-      background: #020617;
-      color: #e5e7eb;
-      font-size: 0.9rem;
-      resize: vertical;
-      outline: none;
-    }
-
-    textarea:focus {
-      border-color: #22c55e;
-      box-shadow: 0 0 0 1px rgba(34,197,94,0.6);
-    }
-
-    .overlay-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .muted {
-      color: #9ca3af;
-      font-size: 0.8rem;
-    }
-
-    .quick-setup-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr auto;
-      gap: 8px;
-      align-items: end;
-    }
-
-    .quick-setup-grid > div:last-child {
-      text-align: right;
-    }
-
-    .drills-grid {
-      margin-top: 8px;
-    }
-
-    @media (max-width: 600px) {
-      body {
-        padding: 16px;
-      }
-      .card {
-        padding: 18px 16px 14px;
-      }
-      .quick-setup-grid {
-        grid-template-columns: 1fr;
-        align-items: stretch;
-      }
-      .quick-setup-grid > div:last-child {
-        text-align: left;
-      }
-    }
+    .list-item { padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .small-links { display: flex; justify-content: center; gap: 16px; margin-top: 24px; padding-bottom: 40px; }
+    .link-item { font-size: 0.75rem; color: var(--text-muted); cursor: pointer; text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Golf Practice Timer</h1>
-    <div class="subtitle">Quick 4-part session with notes & ball tracking.</div>
-
-    <div class="summary">
-      <div class="summary-row">
-        <span class="summary-label">Lifetime balls tracked</span>
-        <span class="summary-value" id="total-balls">0</span>
+  <div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+      <div>
+        <h1>Practice Caddie</h1>
+        <div style="font-size:0.75rem; color: var(--text-muted)">v5 Trend Tracking</div>
       </div>
-      <div class="summary-notes-label">Most recent session notes</div>
-      <div class="summary-notes" id="last-notes">
-        No notes yet — finish a session to add some reflections.
+      <div id="pro-badge" class="badge">FREE</div>
+    </div>
+
+    <div class="card">
+      <div class="stat-label" style="text-align:center; margin-bottom:10px;">Practice Statistics</div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Week</div>
+          <div id="balls-week" class="stat-value">0</div>
+          <div id="sub-week" class="stat-label" style="margin-top:4px; font-size:0.55rem;">0m • 0★</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Month</div>
+          <div id="balls-month" class="stat-value">0</div>
+          <div id="sub-month" class="stat-label" style="margin-top:4px; font-size:0.55rem;">0m • 0★</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Lifetime</div>
+          <div id="balls-life" class="stat-value">0</div>
+          <div id="sub-life" class="stat-label" style="margin-top:4px; font-size:0.55rem;">0m • 0★</div>
+        </div>
+      </div>
+      <div style="margin-top: 12px;">
+        <div class="stat-label">Last Session Notes</div>
+        <div id="last-notes" style="font-size: 0.8rem; color: #d1d5db; margin-top: 4px; font-style: italic;">No history yet.</div>
       </div>
     </div>
 
-    <!-- Quick setup -->
-    <div class="section">
-      <div class="section-title">
-        <span>Quick setup</span>
-        <small>Warm-up 2 min, Full swings 3 min</small>
+    <div class="card" id="setup-section">
+      <div id="setup-header" style="font-weight: 700; margin-bottom: 16px; font-size: 0.8rem; color: var(--accent-blue); text-transform:uppercase;">Setup</div>
+      <div class="grid-2">
+        <div class="input-group">
+          <label>Total Mins</label>
+          <input type="number" id="total-mins" value="15" />
+        </div>
+        <div class="input-group">
+          <label>No. Drills</label>
+          <input type="number" id="num-drills" value="2" />
+        </div>
       </div>
-      <div class="quick-setup-grid">
-        <div>
-          <label for="total-mins">Total session length (minutes)</label>
-          <input type="number" id="total-mins" min="5" step="1" value="15" />
+      <button id="auto-fill-btn" class="btn btn-secondary" style="margin-bottom: 20px; padding: 8px;">Auto-fill Segments</button>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label>Warm-up</label>
+          <input type="number" id="warmup-mins" value="2" />
         </div>
-        <div>
-          <label for="num-drills">Number of drills</label>
-          <input type="number" id="num-drills" min="1" step="1" value="2" />
+        <div class="input-group">
+          <label>Wrap-up</label>
+          <input type="number" id="wrapup-mins" value="3" />
         </div>
-        <div>
-          <button id="auto-fill-btn" class="btn-secondary" type="button">Auto-fill sections</button>
-        </div>
+      </div>
+      <div id="drills-container">
+        <label>Drills (Minutes)</label>
+        <div id="drills-grid" class="grid-2" style="margin-top:6px"></div>
       </div>
     </div>
 
-    <div class="section">
-      <div class="section-title">
-        <span>Session layout</span>
-        <small>You can still edit these manually</small>
+    <div id="timer-panel" style="display:none;">
+      <div class="timer-container">
+        <div class="stat-label" id="current-section-name">SECTION</div>
+        <div class="time-large" id="time-remaining">00:00</div>
+        <div id="next-section-label" class="stat-label" style="opacity: 0.6;">Next: --</div>
+        <div class="progress-bar" id="timer-progress"></div>
       </div>
-
-      <!-- Warm-up + full swings row -->
-      <div class="grid">
-        <div>
-          <label for="warmup-mins">Warm-up (minutes)</label>
-          <input type="number" id="warmup-mins" min="0" step="1" value="3" />
-        </div>
-        <div>
-          <label for="full-mins">Full swings (minutes)</label>
-          <input type="number" id="full-mins" min="0" step="1" value="4" />
-        </div>
-      </div>
-
-      <!-- Dynamic drills grid -->
-      <div class="section">
-        <label>Drills (minutes)</label>
-        <div id="drills-grid" class="grid drills-grid"></div>
-      </div>
-
-      <div class="timer-display" id="timer-panel" style="display:none;">
-        <div class="timer-row">
-          <div class="timer-label">Current section</div>
-          <div class="timer-value" id="current-section-name">–</div>
-        </div>
-        <div class="timer-row">
-          <div class="timer-label">Time remaining</div>
-          <div class="timer-value" id="time-remaining">00:00</div>
-        </div>
-        <div class="timer-sub" id="next-section-label">
-          Next: –
-        </div>
+      <div class="grid-2" style="margin-bottom: 16px;">
+        <button id="pause-btn" class="btn btn-secondary">Pause</button>
+        <button id="stop-btn" class="btn btn-danger">Stop</button>
       </div>
     </div>
 
-    <div class="controls">
-      <button id="start-btn" class="btn-primary">Start session</button>
-      <button id="pause-btn" class="btn-secondary" disabled>Pause</button>
-      <button id="stop-btn" class="btn-secondary" disabled>Stop</button>
-      <span class="small-link" id="reset-balls-link">Reset ball count</span>
-    </div>
-    <div class="footer-note">
-      Settings are saved only in this browser via local storage.
+    <button id="start-btn" class="btn btn-primary">Start Practice Session</button>
+
+    <div class="small-links">
+      <span class="link-item" id="view-plans-link">Plans</span>
+      <span class="link-item" id="view-history-link">History</span>
+      <span class="link-item" id="reset-all-link" style="color:#ef4444">Reset All</span>
+      <span class="link-item" id="toggle-pro-link">Debug Pro</span>
     </div>
   </div>
 
   <div class="overlay" id="session-end-overlay">
     <div class="overlay-card">
-      <h2>Session complete!</h2>
-      <p>Nice work. Log your balls and any quick notes so future you remembers what today felt like.</p>
-      <div class="section">
-        <label for="balls-hit-input">Balls hit this session</label>
-        <input type="number" id="balls-hit-input" min="0" step="1" value="0" />
+      <h2 style="margin-top:0">Session Complete</h2>
+      <div class="input-group">
+        <label>Rating</label>
+        <div class="star-rating">
+          <input type="radio" id="star5" name="rating" value="5" /><label for="star5">★</label>
+          <input type="radio" id="star4" name="rating" value="4" /><label for="star4">★</label>
+          <input type="radio" id="star3" name="rating" value="3" /><label for="star3">★</label>
+          <input type="radio" id="star2" name="rating" value="2" /><label for="star2">★</label>
+          <input type="radio" id="star1" name="rating" value="1" /><label for="star1">★</label>
+          <input type="radio" id="star0" name="rating" value="0" checked style="display:none"/>
+        </div>
       </div>
-      <div class="section">
-        <label for="notes-input">Notes / feedback</label>
-        <textarea id="notes-input" placeholder="What went well? What should you focus on next time?"></textarea>
+      <div class="grid-2">
+        <div class="input-group">
+          <label>Balls Hit</label>
+          <input type="number" id="balls-hit-input" value="0" />
+        </div>
+        <div class="input-group">
+          <label>Time: <span id="actual-time-display">0</span>m</label>
+        </div>
       </div>
-      <div class="overlay-actions">
-        <button class="btn-secondary" id="skip-log-btn">Skip</button>
-        <button class="btn-primary" id="save-log-btn">Save</button>
+      <div class="input-group"><label>Notes</label><textarea id="notes-input" placeholder="Feedback..."></textarea></div>
+      <div class="grid-2">
+        <button class="btn btn-secondary" id="skip-log-btn">Skip</button>
+        <button class="btn btn-primary" id="save-log-btn">Save</button>
       </div>
-      <div class="muted">You can always see your most recent notes on the main screen.</div>
     </div>
   </div>
 
+  <div class="overlay" id="history-overlay"><div class="overlay-card"><h2>History</h2><div id="history-list"></div><button class="btn btn-secondary" id="close-history-btn" style="margin-top:16px">Close</button></div></div>
+  <div class="overlay" id="plans-overlay"><div class="overlay-card"><h2>Plans</h2><input type="text" id="new-plan-name" placeholder="Plan Name" /><button class="btn btn-primary" id="save-current-plan-btn" style="margin:12px 0">Save Current Setup</button><div id="plans-list"></div><button class="btn btn-secondary" id="close-plans-btn" style="margin-top:16px">Close</button></div></div>
+
   <script>
     (function() {
-      const totalBallsEl = document.getElementById('total-balls');
-      const lastNotesEl = document.getElementById('last-notes');
-
-      const totalMinsInput = document.getElementById('total-mins');
-      const numDrillsInput = document.getElementById('num-drills');
-      const autoFillBtn = document.getElementById('auto-fill-btn');
-
-      const warmupInput = document.getElementById('warmup-mins');
-      const fullInput = document.getElementById('full-mins');
-
-      const drillsGrid = document.getElementById('drills-grid');
-      let drillInputs = [];
-
-      const timerPanel = document.getElementById('timer-panel');
-      const currentSectionNameEl = document.getElementById('current-section-name');
-      const timeRemainingEl = document.getElementById('time-remaining');
-      const nextSectionLabelEl = document.getElementById('next-section-label');
-
-      const startBtn = document.getElementById('start-btn');
-      const pauseBtn = document.getElementById('pause-btn');
-      const stopBtn = document.getElementById('stop-btn');
-      const resetBallsLink = document.getElementById('reset-balls-link');
-
-      const overlay = document.getElementById('session-end-overlay');
-      const ballsHitInput = document.getElementById('balls-hit-input');
-      const notesInput = document.getElementById('notes-input');
-      const saveLogBtn = document.getElementById('save-log-btn');
-      const skipLogBtn = document.getElementById('skip-log-btn');
-
-      const STORAGE_TOTAL_BALLS = 'golfPracticeTotalBalls';
-      const STORAGE_LAST_NOTES = 'golfPracticeLastNotes';
-
-      let timerId = null;
-      let sectionsRuntime = [];
-      let currentSectionIndex = 0;
-      let sectionEndTimestamp = 0;
-      let sessionRunning = false;
-      let isPaused = false;
-      let pausedRemainingSec = 0;
-
-      function loadPersistentData() {
-        const storedBalls = localStorage.getItem(STORAGE_TOTAL_BALLS);
-        const storedNotes = localStorage.getItem(STORAGE_LAST_NOTES);
-
-        if (storedBalls !== null && !isNaN(parseInt(storedBalls, 10))) {
-          totalBallsEl.textContent = parseInt(storedBalls, 10);
-        } else {
-          totalBallsEl.textContent = '0';
-        }
-
-        if (storedNotes && storedNotes.trim() !== '') {
-          lastNotesEl.textContent = storedNotes;
-        } else {
-          lastNotesEl.textContent = 'No notes yet — finish a session to add some reflections.';
-        }
-      }
-
-      function saveTotals(ballsToAdd, newNotes) {
-        const currentTotal = parseInt(localStorage.getItem(STORAGE_TOTAL_BALLS), 10) || 0;
-        const updatedTotal = currentTotal + (ballsToAdd || 0);
-        localStorage.setItem(STORAGE_TOTAL_BALLS, String(updatedTotal));
-        totalBallsEl.textContent = updatedTotal;
-
-        if (newNotes && newNotes.trim() !== '') {
-          localStorage.setItem(STORAGE_LAST_NOTES, newNotes.trim());
-          lastNotesEl.textContent = newNotes.trim();
-        }
-      }
-
-      function formatSeconds(sec) {
-        const s = Math.max(0, Math.floor(sec));
-        const m = Math.floor(s / 60);
-        const r = s % 60;
-        const mm = String(m).padStart(2, '0');
-        const ss = String(r).padStart(2, '0');
-        return mm + ':' + ss;
-      }
-
-      let sharedAudioContext = null;
-
-      function playChime() {
-        try {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (!AC) return;
+      const STORAGE_SESSIONS = 'golfPracticeSessionsV5';
+      const STORAGE_PLANS = 'golfPracticePlansV5';
+      const STORAGE_LAST_STATE = 'golfPracticeLastStateV5';
+      const STORAGE_PRO = 'golfPracticeDebugIsPro';
       
-          window._audioCtx = window._audioCtx || new AC();
-          const ctx = window._audioCtx;
-      
-          const ding = (t, freq, dur = 0.16) => {
-            const o = ctx.createOscillator();
-            const g = ctx.createGain();
-      
-            o.type = "triangle";
-            o.frequency.setValueAtTime(freq, t);
-      
-            // Louder envelope
-            g.gain.setValueAtTime(0.0001, t);
-            g.gain.exponentialRampToValueAtTime(1.0, t + 0.01); // 🔊 louder peak
-            g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      
-            o.connect(g);
-            g.connect(ctx.destination);
-      
-            o.start(t);
-            o.stop(t + dur + 0.03);
-          };
-      
-          const t0 = ctx.currentTime + 0.01;
-          ding(t0, 880);          // A5
-          ding(t0 + 0.22, 988);   // B5-ish
-          ding(t0 + 0.44, 1175);  // D6-ish
-        } catch (e) {
-          console.warn("Chime error", e);
-        }
-      }
-      
-      function rebuildDrillInputs(count) {
-        drillsGrid.innerHTML = '';
-        drillInputs = [];
+      let Entitlement = { isPro: false };
+      let timerId = null, sectionsRuntime = [], currentSectionIndex = 0, sectionEndTimestamp = 0, sectionDurationSec = 0, sessionRunning = false, isPaused = false, pausedRemainingSec = 0, drillInputs = [], sessionStartTime = 0, totalPausedMs = 0, pauseStartTime = 0;
 
-        if (count < 1 || isNaN(count)) {
-          count = 1;
-        }
+      const elements = {
+        ballsWeek: document.getElementById('balls-week'), subWeek: document.getElementById('sub-week'),
+        ballsMonth: document.getElementById('balls-month'), subMonth: document.getElementById('sub-month'),
+        ballsLife: document.getElementById('balls-life'), subLife: document.getElementById('sub-life'),
+        lastNotes: document.getElementById('last-notes'),
+        totalMins: document.getElementById('total-mins'), numDrills: document.getElementById('num-drills'),
+        warmup: document.getElementById('warmup-mins'), wrapup: document.getElementById('wrapup-mins'),
+        drillsGrid: document.getElementById('drills-grid'), timerPanel: document.getElementById('timer-panel'),
+        setupSection: document.getElementById('setup-section'), setupHeader: document.getElementById('setup-header'),
+        currentSectionName: document.getElementById('current-section-name'), timeRemaining: document.getElementById('time-remaining'),
+        nextSection: document.getElementById('next-section-label'), progressBar: document.getElementById('timer-progress'),
+        startBtn: document.getElementById('start-btn'), pauseBtn: document.getElementById('pause-btn'), stopBtn: document.getElementById('stop-btn')
+      };
 
+      function formatSeconds(sec) { return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; }
+      
+      function rebuildDrills(count, values = []) {
+        elements.drillsGrid.innerHTML = ''; drillInputs = [];
         for (let i = 0; i < count; i++) {
-          const wrapper = document.createElement('div');
-          const label = document.createElement('label');
-          label.textContent = 'Drill ' + (i + 1) + ' (minutes)';
-          const input = document.createElement('input');
-          input.type = 'number';
-          input.min = '0';
-          input.step = '1';
-          input.value = '0';
-
-          label.appendChild(input);
-          wrapper.appendChild(label);
-          drillsGrid.appendChild(wrapper);
-          drillInputs.push(input);
+          const input = document.createElement('input'); input.type = 'number'; input.value = values[i] || '0';
+          elements.drillsGrid.appendChild(input); drillInputs.push(input);
+          input.onchange = saveState;
         }
       }
 
-      function updateTimerDisplay() {
-        if (!sessionRunning || sectionsRuntime.length === 0 || isPaused) return;
+      function saveState() {
+        const state = { totalMins: elements.totalMins.value, numDrills: elements.numDrills.value, warmup: elements.warmup.value, wrapup: elements.wrapup.value, drills: drillInputs.map(i => i.value), headerText: elements.setupHeader.textContent };
+        localStorage.setItem(STORAGE_LAST_STATE, JSON.stringify(state));
+      }
 
-        const now = Date.now();
-        const remainingMs = sectionEndTimestamp - now;
-        const remainingSec = Math.ceil(remainingMs / 1000);
-
-        if (remainingSec <= 0) {
-          skipSection();
-          return;
-        }
-
-        const currentSection = sectionsRuntime[currentSectionIndex];
-        currentSectionNameEl.textContent = currentSection.name;
-        timeRemainingEl.textContent = formatSeconds(remainingSec);
-
-        const nextIndex = currentSectionIndex + 1;
-        if (nextIndex < sectionsRuntime.length) {
-          nextSectionLabelEl.textContent = 'Next: ' + sectionsRuntime[nextIndex].name;
+      function loadLastState() {
+        const saved = localStorage.getItem(STORAGE_LAST_STATE);
+        if (saved) {
+          const s = JSON.parse(saved);
+          elements.totalMins.value = s.totalMins; elements.numDrills.value = s.numDrills;
+          elements.warmup.value = s.warmup; elements.wrapup.value = s.wrapup;
+          elements.setupHeader.textContent = s.headerText || "SETUP";
+          rebuildDrills(s.numDrills, s.drills);
         } else {
-          nextSectionLabelEl.textContent = 'Next: Session complete';
+          elements.totalMins.value = 15; elements.numDrills.value = 2; elements.warmup.value = 2; elements.wrapup.value = 3;
+          rebuildDrills(2, [5, 5]); elements.setupHeader.textContent = "SETUP";
         }
+      }
+
+      function loadStats() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_SESSIONS) || '[]');
+        Entitlement.isPro = localStorage.getItem(STORAGE_PRO) === '1';
+        document.getElementById('pro-badge').textContent = Entitlement.isPro ? 'PRO' : 'FREE';
+        const now = Date.now();
+        const calc = (days) => {
+          const filtered = days ? history.filter(s => (now - s.timestamp) < days * 86400000) : history;
+          const b = filtered.reduce((a, s) => a + s.balls, 0);
+          const m = filtered.reduce((a, s) => a + s.actualMins, 0);
+          const r = filtered.filter(s => s.rating > 0).map(s => s.rating);
+          const avg = r.length ? (r.reduce((a, b) => a + b, 0) / r.length).toFixed(1) : '0';
+          return { b, m, avg };
+        };
+        const w = calc(7), m = calc(30), l = calc(0);
+        elements.ballsWeek.textContent = w.b; elements.subWeek.textContent = `${w.m}m • ${w.avg}★`;
+        elements.ballsMonth.textContent = m.b; elements.subMonth.textContent = `${m.m}m • ${m.avg}★`;
+        elements.ballsLife.textContent = l.b; elements.subLife.textContent = `${l.m}m • ${l.avg}★`;
+        elements.lastNotes.textContent = history[0]?.notes || "No history yet.";
+        const blur = Entitlement.isPro ? 'none' : 'blur(4px)';
+        [elements.ballsWeek, elements.subWeek, elements.ballsMonth, elements.subMonth, elements.ballsLife, elements.subLife, elements.lastNotes].forEach(el => el.style.filter = blur);
+      }
+
+      function updateTimer() {
+        if (!sessionRunning || isPaused) return;
+        const rem = Math.ceil((sectionEndTimestamp - Date.now()) / 1000);
+        if (rem <= 0) { skipSection(); return; }
+        elements.timeRemaining.textContent = formatSeconds(rem);
+        elements.progressBar.style.width = ((rem / sectionDurationSec) * 100) + "%";
       }
 
       function beginSection() {
-        const currentSection = sectionsRuntime[currentSectionIndex];
-        const durationMs = currentSection.durationSec * 1000;
-
-        sectionEndTimestamp = Date.now() + durationMs;
-
-        currentSectionNameEl.textContent = currentSection.name;
-        timeRemainingEl.textContent = formatSeconds(currentSection.durationSec);
-
-        const nextIndex = currentSectionIndex + 1;
-        if (nextIndex < sectionsRuntime.length) {
-          nextSectionLabelEl.textContent = 'Next: ' + sectionsRuntime[nextIndex].name;
-        } else {
-          nextSectionLabelEl.textContent = 'Next: Session complete';
-        }
-
-        if (timerId) {
-          clearInterval(timerId);
-        }
-        timerId = setInterval(updateTimerDisplay, 250);
+        const s = sectionsRuntime[currentSectionIndex];
+        sectionDurationSec = s.durationSec; sectionEndTimestamp = Date.now() + (s.durationSec * 1000);
+        elements.currentSectionName.textContent = s.name; elements.timeRemaining.textContent = formatSeconds(s.durationSec);
+        elements.nextSection.textContent = sectionsRuntime[currentSectionIndex + 1] ? `Next: ${sectionsRuntime[currentSectionIndex + 1].name}` : "Next: Done";
+        clearInterval(timerId); timerId = setInterval(updateTimer, 250);
       }
 
       function skipSection() {
-        playChime();
-
-        currentSectionIndex += 1;
-        if (currentSectionIndex >= sectionsRuntime.length) {
-          endSession(true);
-          return;
-        }
-
-        isPaused = false;
-        pausedRemainingSec = 0;
-
-        beginSection();
+        currentSectionIndex++;
+        if (currentSectionIndex >= sectionsRuntime.length) { endSession(true); } else { beginSection(); }
       }
 
       function startSession() {
-        if (sessionRunning) return;
-
-        const durations = [];
-
-        const warmMin = parseFloat(warmupInput.value) || 0;
-        if (warmMin > 0) {
-          durations.push({ name: 'Warm-up', minutes: warmMin });
-        }
-
-        drillInputs.forEach((input, idx) => {
-          const val = parseFloat(input.value) || 0;
-          if (val > 0) {
-            durations.push({ name: 'Drill ' + (idx + 1), minutes: val });
-          }
-        });
-
-        const fullMin = parseFloat(fullInput.value) || 0;
-        if (fullMin > 0) {
-          durations.push({ name: 'Full swings', minutes: fullMin });
-        }
-
-        const totalMinutes = durations.reduce((sum, d) => sum + d.minutes, 0);
-
-        if (totalMinutes <= 0) {
-          alert('Please set at least one section to a duration greater than zero.');
-          return;
-        }
-
-        sectionsRuntime = durations.map(d => ({
-          name: d.name,
-          durationSec: Math.round(d.minutes * 60)
-        }));
-
-        currentSectionIndex = 0;
-        sessionRunning = true;
-        isPaused = false;
-        pausedRemainingSec = 0;
-
-        timerPanel.style.display = 'block';
-
-        startBtn.textContent = 'Skip section';
-        startBtn.classList.remove('btn-primary');
-        startBtn.classList.add('btn-secondary');
-
-        pauseBtn.disabled = false;
-        pauseBtn.textContent = 'Pause';
-        stopBtn.disabled = false;
-        warmupInput.disabled = true;
-        fullInput.disabled = true;
-        drillInputs.forEach(input => input.disabled = true);
-        totalMinsInput.disabled = true;
-        numDrillsInput.disabled = true;
-        autoFillBtn.disabled = true;
-
+        const durs = [];
+        if (elements.warmup.value > 0) durs.push({ name: 'Warm-up', durationSec: elements.warmup.value * 60 });
+        drillInputs.forEach((i, idx) => { if (i.value > 0) durs.push({ name: `Drill ${idx+1}`, durationSec: i.value * 60 }); });
+        if (elements.wrapup.value > 0) durs.push({ name: 'Wrap-up', durationSec: elements.wrapup.value * 60 });
+        if (!durs.length) return;
+        sectionsRuntime = durs; currentSectionIndex = 0; sessionRunning = true; sessionStartTime = Date.now();
+        elements.timerPanel.style.display = 'block'; elements.setupSection.style.display = 'none';
+        elements.startBtn.textContent = "Skip Section"; elements.startBtn.classList.replace('btn-primary', 'btn-secondary');
         beginSection();
-        playChime();
       }
 
-      function handleStartOrSkip() {
-        if (!sessionRunning) {
-          startSession();
-        } else {
-          skipSection();
-        }
-      }
-
-      function pauseOrResumeSession() {
-        if (!sessionRunning) return;
-
-        if (!isPaused) {
-          const now = Date.now();
-          const remainingMs = sectionEndTimestamp - now;
-          pausedRemainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
-
-          if (timerId) {
-            clearInterval(timerId);
-            timerId = null;
-          }
-
-          isPaused = true;
-          pauseBtn.textContent = 'Resume';
-        } else {
-          if (pausedRemainingSec <= 0) {
-            skipSection();
-            return;
-          }
-
-          sectionEndTimestamp = Date.now() + pausedRemainingSec * 1000;
-          isPaused = false;
-          pauseBtn.textContent = 'Pause';
-
-          if (!timerId) {
-            timerId = setInterval(updateTimerDisplay, 250);
-          }
+      function endSession(showLog) {
+        sessionRunning = false; clearInterval(timerId);
+        elements.timerPanel.style.display = 'none'; elements.setupSection.style.display = 'block';
+        elements.startBtn.textContent = "Start Practice Session"; elements.startBtn.classList.replace('btn-secondary', 'btn-primary');
+        if (showLog) {
+          document.getElementById('actual-time-display').textContent = Math.round((Date.now() - sessionStartTime - totalPausedMs) / 60000);
+          document.getElementById('session-end-overlay').classList.add('active');
         }
       }
 
-      function endSession(triggerOverlay) {
-        if (!sessionRunning) return;
+      elements.startBtn.onclick = () => sessionRunning ? skipSection() : startSession();
+      elements.pauseBtn.onclick = () => {
+        isPaused = !isPaused;
+        if (isPaused) { pauseStartTime = Date.now(); pausedRemainingSec = Math.ceil((sectionEndTimestamp - Date.now()) / 1000); clearInterval(timerId); elements.pauseBtn.textContent = "Resume"; }
+        else { totalPausedMs += (Date.now() - pauseStartTime); sectionEndTimestamp = Date.now() + (pausedRemainingSec * 1000); timerId = setInterval(updateTimer, 250); elements.pauseBtn.textContent = "Pause"; }
+      };
+      elements.stopBtn.onclick = () => confirm("End early?") && endSession(true);
 
-        sessionRunning = false;
-        isPaused = false;
-        pausedRemainingSec = 0;
+      document.getElementById('save-log-btn').onclick = () => {
+        const history = JSON.parse(localStorage.getItem(STORAGE_SESSIONS) || '[]');
+        const rating = parseInt(document.querySelector('input[name="rating"]:checked').value);
+        history.unshift({ timestamp: Date.now(), balls: parseInt(document.getElementById('balls-hit-input').value) || 0, actualMins: parseInt(document.getElementById('actual-time-display').textContent) || 0, rating, notes: Entitlement.isPro ? document.getElementById('notes-input').value : '' });
+        localStorage.setItem(STORAGE_SESSIONS, JSON.stringify(history));
+        loadStats(); document.getElementById('session-end-overlay').classList.remove('active');
+      };
 
-        if (timerId) {
-          clearInterval(timerId);
-          timerId = null;
-        }
+      document.getElementById('auto-fill-btn').onclick = () => {
+        const total = parseInt(elements.totalMins.value) || 15;
+        elements.warmup.value = 2; elements.wrapup.value = 3;
+        const count = parseInt(elements.numDrills.value) || 1;
+        const perDrill = Math.floor((total - 5) / count);
+        rebuildDrills(count, Array(count).fill(perDrill));
+        elements.setupHeader.textContent = "SETUP"; saveState();
+      };
 
-        startBtn.textContent = 'Start session';
-        startBtn.classList.remove('btn-secondary');
-        startBtn.classList.add('btn-primary');
+      document.getElementById('reset-all-link').onclick = () => { if(confirm("Reset everything?")) { localStorage.clear(); location.reload(); } };
+      document.getElementById('toggle-pro-link').onclick = () => { localStorage.setItem(STORAGE_PRO, Entitlement.isPro ? '0' : '1'); loadStats(); };
+      document.getElementById('skip-log-btn').onclick = () => document.getElementById('session-end-overlay').classList.remove('active');
+      document.getElementById('view-history-link').onclick = () => document.getElementById('history-overlay').classList.add('active');
+      document.getElementById('close-history-btn').onclick = () => document.getElementById('history-overlay').classList.remove('active');
+      document.getElementById('view-plans-link').onclick = () => document.getElementById('plans-overlay').classList.add('active');
+      document.getElementById('close-plans-btn').onclick = () => document.getElementById('plans-overlay').classList.remove('active');
 
-        pauseBtn.disabled = true;
-        pauseBtn.textContent = 'Pause';
-        stopBtn.disabled = true;
-        warmupInput.disabled = false;
-        fullInput.disabled = false;
-        drillInputs.forEach(input => input.disabled = false);
-        totalMinsInput.disabled = false;
-        numDrillsInput.disabled = false;
-        autoFillBtn.disabled = false;
+      elements.numDrills.onchange = () => { rebuildDrills(parseInt(elements.numDrills.value) || 1); elements.setupHeader.textContent = "SETUP"; saveState(); };
+      elements.totalMins.onchange = elements.warmup.onchange = elements.wrapup.onchange = () => { elements.setupHeader.textContent = "SETUP"; saveState(); };
 
-        nextSectionLabelEl.textContent = 'Next: –';
-        currentSectionNameEl.textContent = '–';
-        timeRemainingEl.textContent = '00:00';
-
-        playChime();
-
-        if (triggerOverlay) {
-          ballsHitInput.value = '0';
-          notesInput.value = '';
-          overlay.classList.add('active');
-        }
-      }
-
-      function stopSessionManually() {
-        if (!sessionRunning) return;
-        const proceed = confirm('Stop the current session? Progress will not be logged automatically.');
-        if (!proceed) return;
-        endSession(false);
-      }
-
-      function handleSaveLog() {
-        const ballsRaw = ballsHitInput.value.trim();
-        const balls = ballsRaw === '' ? 0 : parseInt(ballsRaw, 10);
-        const notes = notesInput.value;
-
-        if (ballsRaw !== '' && (isNaN(balls) || balls < 0)) {
-          alert('Please enter a valid number of balls (0 or more).');
-          return;
-        }
-
-        saveTotals(balls, notes);
-        overlay.classList.remove('active');
-      }
-
-      function handleSkipLog() {
-        overlay.classList.remove('active');
-      }
-
-      function resetBallCount() {
-        const confirmed = confirm('Reset the total ball count to 0? This cannot be undone.');
-        if (!confirmed) return;
-        localStorage.setItem(STORAGE_TOTAL_BALLS, '0');
-        totalBallsEl.textContent = '0';
-      }
-
-      function autoFillSections() {
-        let total = parseInt(totalMinsInput.value, 10);
-        let drills = parseInt(numDrillsInput.value, 10);
-
-        if (isNaN(total) || total < 5) {
-          alert('Total session length should be at least 5 minutes (2 warm-up + 3 full swings).');
-          return;
-        }
-
-        if (isNaN(drills) || drills < 1) {
-          drills = 1;
-          numDrillsInput.value = 1;
-        }
-
-        rebuildDrillInputs(drills);
-
-        const warmupDefault = 2;
-        const fullDefault = 3;
-        const baseRequired = warmupDefault + fullDefault;
-
-        if (total < baseRequired) {
-          alert('Total time must be at least 5 minutes (2 warm-up + 3 full swings).');
-          return;
-        }
-
-        const remaining = total - baseRequired;
-        const perDrillBase = Math.floor(remaining / drills);
-        const remainder = remaining % drills;
-
-        warmupInput.value = warmupDefault;
-        fullInput.value = fullDefault;
-
-        drillInputs.forEach((input, idx) => {
-          let minutes = perDrillBase;
-          if (idx < remainder) minutes += 1;
-          input.value = minutes;
-        });
-      }
-
-      startBtn.addEventListener('click', handleStartOrSkip);
-      pauseBtn.addEventListener('click', pauseOrResumeSession);
-      stopBtn.addEventListener('click', stopSessionManually);
-      resetBallsLink.addEventListener('click', resetBallCount);
-      saveLogBtn.addEventListener('click', handleSaveLog);
-      skipLogBtn.addEventListener('click', handleSkipLog);
-      autoFillBtn.addEventListener('click', autoFillSections);
-
-      overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) {
-          overlay.classList.remove('active');
-        }
-      });
-
-      // Rebuild drills whenever number changes (but without auto-filling)
-      numDrillsInput.addEventListener('change', function() {
-        let n = parseInt(numDrillsInput.value, 10);
-        if (isNaN(n) || n < 1) {
-          n = 1;
-          numDrillsInput.value = 1;
-        }
-        rebuildDrillInputs(n);
-      });
-
-      // Initial drills (2 drills by default)
-      rebuildDrillInputs(parseInt(numDrillsInput.value, 10) || 2);
-      loadPersistentData();
+      loadLastState(); loadStats();
     })();
   </script>
 </body>

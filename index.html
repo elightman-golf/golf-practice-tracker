@@ -1,385 +1,1312 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Practice Caddie - v5</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg-main: #0a0f1d;
-      --bg-card: #111827;
-      --accent-green: #10b981;
-      --accent-blue: #0ea5e9;
-      --accent-red: #ef4444;
-      --accent-gold: #fbbf24;
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
-      --border: rgba(255, 255, 255, 0.1);
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-
-    body {
-      margin: 0; background: var(--bg-main); color: var(--text-main);
-      display: flex; justify-content: center; padding: 20px; line-height: 1.5; min-height: 100vh;
-    }
-
-    .container { max-width: 480px; width: 100%; }
-
-    .card {
-      background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border);
-      padding: 24px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    h1 {
-      font-size: 1.25rem; font-weight: 700; margin: 0;
-      background: linear-gradient(to right, #fff, #9ca3af);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-
-    .badge {
-      font-size: 0.7rem; padding: 2px 8px; border-radius: 6px;
-      background: rgba(16, 185, 129, 0.1); color: var(--accent-green); font-weight: 700;
-    }
-
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .stat-box {
-      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-      border-radius: 12px; padding: 10px; text-align: center;
-    }
-    .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
-    .stat-value { font-size: 1.1rem; font-weight: 700; color: white; }
-
-    .input-group { margin-bottom: 16px; }
-    label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; color: var(--text-muted); }
-
-    input[type="number"], input[type="text"], textarea {
-      width: 100%; background: #0a0f1d; border: 1px solid var(--border);
-      border-radius: 10px; padding: 10px 12px; color: white; font-size: 1rem; box-sizing: border-box;
-    }
-
-    .timer-container {
-      background: #000; border-radius: 16px; padding: 32px 24px; text-align: center;
-      position: relative; overflow: hidden; border: 1px solid var(--accent-blue); margin-bottom: 16px;
-    }
-
-    .progress-bar {
-      position: absolute; bottom: 0; left: 0; height: 6px; background: var(--accent-blue);
-      width: 100%; transition: width 0.25s linear;
-    }
-
-    .time-large { font-size: 4rem; font-weight: 800; font-variant-numeric: tabular-nums; margin: 8px 0; }
-
-    .btn {
-      width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer;
-      border: none; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;
-    }
-    .btn-primary { background: var(--accent-green); color: #064e3b; }
-    .btn-secondary { background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); }
-    .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    .star-rating {
-      display: flex; flex-direction: row-reverse; justify-content: center; gap: 8px; margin: 12px 0;
-    }
-    .star-rating input { display: none; }
-    .star-rating label { font-size: 2.5rem; color: #334155; cursor: pointer; transition: color 0.1s; }
-    .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: var(--accent-gold); }
-
-    .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-      display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
-    }
-    .overlay.active { display: flex; }
-    .overlay-card { 
-      background: var(--bg-card); border-radius: 20px; padding: 24px; width: 100%; 
-      max-width: 400px; border: 1px solid var(--border); max-height: 80vh; overflow-y: auto;
-    }
-
-    .list-item { padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    .small-links { display: flex; justify-content: center; gap: 16px; margin-top: 24px; padding-bottom: 40px; }
-    .link-item { font-size: 0.75rem; color: var(--text-muted); cursor: pointer; text-decoration: underline; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Practice Caddie</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-      <div>
-        <h1>Practice Caddie</h1>
-        <div style="font-size:0.75rem; color: var(--text-muted)">v5 Trend Tracking</div>
-      </div>
-      <div id="pro-badge" class="badge">FREE</div>
-    </div>
-
-    <div class="card">
-      <div class="stat-label" style="text-align:center; margin-bottom:10px;">Practice Statistics</div>
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-label">Week</div>
-          <div id="balls-week" class="stat-value">0</div>
-          <div id="sub-week" class="stat-label" style="margin-top:4px; font-size:0.55rem;">0m • 0★</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Month</div>
-          <div id="balls-month" class="stat-value">0</div>
-          <div id="sub-month" class="stat-label" style="margin-top:4px; font-size:0.55rem;">0m • 0★</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Lifetime</div>
-          <div id="balls-life" class="stat-value">0</div>
-          <div id="sub-life" class="stat-label" style="margin-top:4px; font-size:0.55rem;">0m • 0★</div>
-        </div>
-      </div>
-      <div style="margin-top: 12px;">
-        <div class="stat-label">Last Session Notes</div>
-        <div id="last-notes" style="font-size: 0.8rem; color: #d1d5db; margin-top: 4px; font-style: italic;">No history yet.</div>
-      </div>
-    </div>
-
-    <div class="card" id="setup-section">
-      <div id="setup-header" style="font-weight: 700; margin-bottom: 16px; font-size: 0.8rem; color: var(--accent-blue); text-transform:uppercase;">Setup</div>
-      <div class="grid-2">
-        <div class="input-group">
-          <label>Total Mins</label>
-          <input type="number" id="total-mins" value="15" />
-        </div>
-        <div class="input-group">
-          <label>No. Drills</label>
-          <input type="number" id="num-drills" value="2" />
-        </div>
-      </div>
-      <button id="auto-fill-btn" class="btn btn-secondary" style="margin-bottom: 20px; padding: 8px;">Auto-fill Segments</button>
-
-      <div class="grid-2">
-        <div class="input-group">
-          <label>Warm-up</label>
-          <input type="number" id="warmup-mins" value="2" />
-        </div>
-        <div class="input-group">
-          <label>Wrap-up</label>
-          <input type="number" id="wrapup-mins" value="3" />
-        </div>
-      </div>
-      <div id="drills-container">
-        <label>Drills (Minutes)</label>
-        <div id="drills-grid" class="grid-2" style="margin-top:6px"></div>
-      </div>
-    </div>
-
-    <div id="timer-panel" style="display:none;">
-      <div class="timer-container">
-        <div class="stat-label" id="current-section-name">SECTION</div>
-        <div class="time-large" id="time-remaining">00:00</div>
-        <div id="next-section-label" class="stat-label" style="opacity: 0.6;">Next: --</div>
-        <div class="progress-bar" id="timer-progress"></div>
-      </div>
-      <div class="grid-2" style="margin-bottom: 16px;">
-        <button id="pause-btn" class="btn btn-secondary">Pause</button>
-        <button id="stop-btn" class="btn btn-danger">Stop</button>
-      </div>
-    </div>
-
-    <button id="start-btn" class="btn btn-primary">Start Practice Session</button>
-
-    <div class="small-links">
-      <span class="link-item" id="view-plans-link">Plans</span>
-      <span class="link-item" id="view-history-link">History</span>
-      <span class="link-item" id="reset-all-link" style="color:#ef4444">Reset All</span>
-      <span class="link-item" id="toggle-pro-link">Debug Pro</span>
-    </div>
-  </div>
-
-  <div class="overlay" id="session-end-overlay">
-    <div class="overlay-card">
-      <h2 style="margin-top:0">Session Complete</h2>
-      <div class="input-group">
-        <label>Rating</label>
-        <div class="star-rating">
-          <input type="radio" id="star5" name="rating" value="5" /><label for="star5">★</label>
-          <input type="radio" id="star4" name="rating" value="4" /><label for="star4">★</label>
-          <input type="radio" id="star3" name="rating" value="3" /><label for="star3">★</label>
-          <input type="radio" id="star2" name="rating" value="2" /><label for="star2">★</label>
-          <input type="radio" id="star1" name="rating" value="1" /><label for="star1">★</label>
-          <input type="radio" id="star0" name="rating" value="0" checked style="display:none"/>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="input-group">
-          <label>Balls Hit</label>
-          <input type="number" id="balls-hit-input" value="0" />
-        </div>
-        <div class="input-group">
-          <label>Time: <span id="actual-time-display">0</span>m</label>
-        </div>
-      </div>
-      <div class="input-group"><label>Notes</label><textarea id="notes-input" placeholder="Feedback..."></textarea></div>
-      <div class="grid-2">
-        <button class="btn btn-secondary" id="skip-log-btn">Skip</button>
-        <button class="btn btn-primary" id="save-log-btn">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="overlay" id="history-overlay"><div class="overlay-card"><h2>History</h2><div id="history-list"></div><button class="btn btn-secondary" id="close-history-btn" style="margin-top:16px">Close</button></div></div>
-  <div class="overlay" id="plans-overlay"><div class="overlay-card"><h2>Plans</h2><input type="text" id="new-plan-name" placeholder="Plan Name" /><button class="btn btn-primary" id="save-current-plan-btn" style="margin:12px 0">Save Current Setup</button><div id="plans-list"></div><button class="btn btn-secondary" id="close-plans-btn" style="margin-top:16px">Close</button></div></div>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+  <div id="app" class="max-w-2xl mx-auto p-4"></div>
 
   <script>
-    (function() {
-      const STORAGE_SESSIONS = 'golfPracticeSessionsV5';
-      const STORAGE_PLANS = 'golfPracticePlansV5';
-      const STORAGE_LAST_STATE = 'golfPracticeLastStateV5';
-      const STORAGE_PRO = 'golfPracticeDebugIsPro';
-      
-      let Entitlement = { isPro: false };
-      let timerId = null, sectionsRuntime = [], currentSectionIndex = 0, sectionEndTimestamp = 0, sectionDurationSec = 0, sessionRunning = false, isPaused = false, pausedRemainingSec = 0, drillInputs = [], sessionStartTime = 0, totalPausedMs = 0, pauseStartTime = 0;
+    let app = {
+      view: 'home',
+      isPro: false,
+      routines: [],
+      plans: [],
+      activePlanId: null,
+      history: [],
+      session: null,
+      timer: null,
+      segmentIndex: 0,
+      timeLeft: 0,
+      editRoutine: null,
+      editPlan: null,
+      quickSetup: { totalMinutes: 15, numDrills: 2 },
+      deleteConfirm: null,
+      showClearConfirm: false,
+      showUpgradeOverlay: false
+    };
 
-      const elements = {
-        ballsWeek: document.getElementById('balls-week'), subWeek: document.getElementById('sub-week'),
-        ballsMonth: document.getElementById('balls-month'), subMonth: document.getElementById('sub-month'),
-        ballsLife: document.getElementById('balls-life'), subLife: document.getElementById('sub-life'),
-        lastNotes: document.getElementById('last-notes'),
-        totalMins: document.getElementById('total-mins'), numDrills: document.getElementById('num-drills'),
-        warmup: document.getElementById('warmup-mins'), wrapup: document.getElementById('wrapup-mins'),
-        drillsGrid: document.getElementById('drills-grid'), timerPanel: document.getElementById('timer-panel'),
-        setupSection: document.getElementById('setup-section'), setupHeader: document.getElementById('setup-header'),
-        currentSectionName: document.getElementById('current-section-name'), timeRemaining: document.getElementById('time-remaining'),
-        nextSection: document.getElementById('next-section-label'), progressBar: document.getElementById('timer-progress'),
-        startBtn: document.getElementById('start-btn'), pauseBtn: document.getElementById('pause-btn'), stopBtn: document.getElementById('stop-btn')
+    // Storage
+    async function save() {
+      try {
+        const data = JSON.stringify({
+          isPro: app.isPro,
+          routines: app.routines,
+          plans: app.plans,
+          activePlanId: app.activePlanId,
+          history: app.history
+        });
+        
+        // Try persistent storage first, fallback to localStorage
+        try {
+          await window.storage.set('golfApp', data);
+        } catch(e) {
+          localStorage.setItem('golfApp', data);
+        }
+      } catch(e) {
+        console.log('Save failed:', e);
+      }
+    }
+
+    async function load() {
+      try {
+        let dataStr = null;
+        
+        // Try persistent storage first, fallback to localStorage
+        try {
+          const data = await window.storage.get('golfApp');
+          if (data && data.value) {
+            dataStr = data.value;
+          }
+        } catch(e) {
+          dataStr = localStorage.getItem('golfApp');
+        }
+        
+        if (dataStr) {
+          const parsed = JSON.parse(dataStr);
+          app.isPro = parsed.isPro || false;
+          app.routines = parsed.routines || [];
+          app.plans = parsed.plans || [];
+          app.activePlanId = parsed.activePlanId || null;
+          app.history = parsed.history || [];
+        }
+        
+        // Add default routine if none exist
+        if (app.routines.length === 0) {
+          app.routines.push({
+            id: 'default-' + Date.now(),
+            name: 'Default Routine',
+            segments: [
+              { name: 'Warm-up', minutes: 2 },
+              { name: 'Drill 1', minutes: 5 },
+              { name: 'Drill 2', minutes: 5 },
+              { name: 'Full swings', minutes: 3 }
+            ]
+          });
+          await save();
+        }
+      } catch(e) {
+        console.log('Load error:', e);
+        // Add default routine for first-time users
+        app.routines.push({
+          id: 'default-' + Date.now(),
+          name: 'Default Routine',
+          segments: [
+            { name: 'Warm-up', minutes: 2 },
+            { name: 'Drill 1', minutes: 5 },
+            { name: 'Drill 2', minutes: 5 },
+            { name: 'Full swings', minutes: 3 }
+          ]
+        });
+        await save();
+      }
+      render();
+    }
+
+    // Timer
+    function startTimer() {
+      if (app.timer) clearInterval(app.timer);
+      app.timer = setInterval(() => {
+        app.timeLeft--;
+        if (app.timeLeft <= 0) {
+          if (app.segmentIndex < app.session.segments.length - 1) {
+            app.segmentIndex++;
+            const seg = app.session.segments[app.segmentIndex];
+            app.timeLeft = seg.minutes * 60;
+            announce(seg.name);
+          } else {
+            stopTimer();
+            app.view = 'complete';
+          }
+        }
+        render();
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (app.timer) clearInterval(app.timer);
+      app.timer = null;
+    }
+
+    function announce(name) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 800;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+      setTimeout(() => {
+        const u = new SpeechSynthesisUtterance('Next: ' + name);
+        u.volume = 1;
+        speechSynthesis.speak(u);
+      }, 600);
+    }
+
+    // Actions
+    window.goTo = (view) => {
+      app.view = view;
+      render();
+    };
+
+    window.togglePro = () => {
+      app.isPro = !app.isPro;
+      save();
+      render();
+    };
+
+    window.showUpgrade = () => {
+      app.showUpgradeOverlay = true;
+      render();
+    };
+
+    window.closeUpgrade = () => {
+      app.showUpgradeOverlay = false;
+      render();
+    };
+
+    window.upgradeToPro = () => {
+      // Placeholder for upgrade flow - will be implemented later
+      alert('Upgrade functionality will be implemented soon!');
+    };
+
+
+    window.clearStorage = async () => {
+      console.log('clearStorage called');
+      app.showClearConfirm = true;
+      console.log('showClearConfirm set to:', app.showClearConfirm);
+      const root = document.getElementById('app');
+      if (app.view === 'settings') {
+        renderSettingsView(root);
+      }
+    };
+
+    window.confirmClearStorage = async () => {
+      console.log('User confirmed, clearing...');
+      try {
+        try {
+          await window.storage.delete('golfApp');
+          console.log('Window storage deleted');
+        } catch(e) {
+          console.log('Window storage failed, using localStorage:', e);
+          localStorage.removeItem('golfApp');
+          console.log('localStorage cleared');
+        }
+        console.log('About to reload...');
+        location.reload();
+      } catch(e) {
+        console.log('Clear failed:', e);
+        alert('Clear failed: ' + e.message);
+      }
+    };
+
+    window.cancelClearStorage = () => {
+      app.showClearConfirm = false;
+      const root = document.getElementById('app');
+      if (app.view === 'settings') {
+        renderSettingsView(root);
+      }
+    };
+
+    window.startRoutine = (id) => {
+      const routine = app.routines.find(r => r.id === id);
+      if (!routine || routine.segments.length === 0) return;
+      
+      app.session = {
+        routineId: routine.id,
+        name: routine.name,
+        segments: routine.segments,
+        startTime: new Date().toISOString()
       };
+      app.segmentIndex = 0;
+      app.timeLeft = routine.segments[0].minutes * 60;
+      app.view = 'session';
+      announce(routine.segments[0].name);
+      startTimer();
+      render();
+    };
 
-      function formatSeconds(sec) { return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; }
+    window.skipSegment = () => {
+      if (app.segmentIndex < app.session.segments.length - 1) {
+        app.segmentIndex++;
+        const seg = app.session.segments[app.segmentIndex];
+        app.timeLeft = seg.minutes * 60;
+        announce(seg.name);
+      } else {
+        stopTimer();
+        app.view = 'complete';
+      }
+      render();
+    };
+
+    window.endSession = () => {
+      stopTimer();
+      app.view = 'complete';
+      render();
+    };
+
+    window.saveSession = () => {
+      const balls = parseInt(document.getElementById('balls').value) || 0;
+      const rating = parseInt(document.querySelector('.rating-selected')?.dataset.rating || 0);
+      const notes = document.getElementById('notes').value;
       
-      function rebuildDrills(count, values = []) {
-        elements.drillsGrid.innerHTML = ''; drillInputs = [];
-        for (let i = 0; i < count; i++) {
-          const input = document.createElement('input'); input.type = 'number'; input.value = values[i] || '0';
-          elements.drillsGrid.appendChild(input); drillInputs.push(input);
-          input.onchange = saveState;
+      const total = app.session.segments.reduce((s, seg) => s + seg.minutes, 0);
+      app.history.unshift({
+        id: Date.now().toString(),
+        date: new Date().toISOString(),
+        routineName: app.session.name,
+        segments: app.session.segments,
+        totalMinutes: total,
+        ballsHit: balls,
+        rating: rating,
+        notes: notes
+      });
+      
+      // If there's an active plan, add this session's data to it
+      if (app.activePlanId) {
+        const activePlan = app.plans.find(p => p.id === app.activePlanId);
+        if (activePlan) {
+          if (!activePlan.progress) {
+            activePlan.progress = { minutes: 0, balls: 0, sessions: 0 };
+          }
+          activePlan.progress.minutes += total;
+          activePlan.progress.balls += balls;
+          activePlan.progress.sessions += 1;
         }
       }
+      
+      app.session = null;
+      app.view = 'home';
+      save();
+      render();
+    };
 
-      function saveState() {
-        const state = { totalMins: elements.totalMins.value, numDrills: elements.numDrills.value, warmup: elements.warmup.value, wrapup: elements.wrapup.value, drills: drillInputs.map(i => i.value), headerText: elements.setupHeader.textContent };
-        localStorage.setItem(STORAGE_LAST_STATE, JSON.stringify(state));
+    window.discardSession = () => {
+      app.session = null;
+      app.view = 'home';
+      render();
+    };
+
+    window.selectRating = (val) => {
+      document.querySelectorAll('[data-rating]').forEach(btn => {
+        btn.className = 'w-12 h-12 rounded-lg border-2 font-bold bg-white text-gray-600 border-gray-300';
+      });
+      event.target.className = 'w-12 h-12 rounded-lg border-2 font-bold bg-green-600 text-white border-green-600 rating-selected';
+    };
+
+    window.newRoutine = () => {
+      app.editRoutine = { id: Date.now().toString(), name: '', segments: [], isNew: true };
+      app.view = 'editRoutine';
+      render();
+    };
+
+    window.quickGenerate = () => {
+      const total = parseInt(document.getElementById('quickTotal').value) || 15;
+      const numDrills = parseInt(document.getElementById('quickDrills').value) || 2;
+      
+      // Fixed times for warm-up and full swings
+      const warmupTime = 2;
+      const fullSwingTime = 3;
+      const remainingTime = total - warmupTime - fullSwingTime;
+      
+      if (remainingTime < numDrills) {
+        alert('Not enough time for that many drills. Increase total time or reduce drills.');
+        return;
+      }
+      
+      const drillTime = Math.floor(remainingTime / numDrills);
+      
+      // Preserve the routine name
+      const currentName = document.getElementById('rname').value;
+      
+      app.editRoutine.segments = [
+        { name: 'Warm-up', minutes: warmupTime }
+      ];
+      
+      for (let i = 1; i <= numDrills; i++) {
+        app.editRoutine.segments.push({ name: `Drill ${i}`, minutes: drillTime });
+      }
+      
+      app.editRoutine.segments.push({ name: 'Full swings', minutes: fullSwingTime });
+      
+      render();
+      
+      // Restore the name after render
+      setTimeout(() => {
+        document.getElementById('rname').value = currentName;
+      }, 0);
+    };
+
+    window.editRoutineById = (id) => {
+      app.editRoutine = app.routines.find(r => r.id === id);
+      app.view = 'editRoutine';
+      render();
+    };
+
+    window.deleteRoutine = (id) => {
+      const routine = app.routines.find(r => r.id === id);
+      app.deleteConfirm = { id, name: routine?.name || 'this routine' };
+      
+      // Force re-render without changing view
+      const root = document.getElementById('app');
+      if (app.view === 'routines') {
+        renderRoutinesView(root);
+      }
+    };
+
+    window.confirmDelete = () => {
+      app.routines = app.routines.filter(r => r.id !== app.deleteConfirm.id);
+      app.deleteConfirm = null;
+      save();
+      const root = document.getElementById('app');
+      if (app.view === 'routines') {
+        renderRoutinesView(root);
+      }
+    };
+
+    window.cancelDelete = () => {
+      app.deleteConfirm = null;
+      const root = document.getElementById('app');
+      if (app.view === 'routines') {
+        renderRoutinesView(root);
+      }
+    };
+
+    function renderRoutinesView(root) {
+      const canAdd = app.isPro || app.routines.length < 3;
+      root.innerHTML = `
+        <div class="flex justify-between items-center mb-6">
+          <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+          <h2 class="text-2xl font-bold">Routines</h2>
+          <div class="w-16"></div>
+        </div>
+
+        ${app.deleteConfirm ? `
+          <div class="bg-red-50 border-2 border-red-500 rounded-lg p-4 mb-4">
+            <p class="font-bold text-red-900 mb-3">Delete "${app.deleteConfirm.name}"?</p>
+            <div class="flex gap-3">
+              <button onclick="confirmDelete()" class="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 font-semibold">Delete</button>
+              <button onclick="cancelDelete()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-2 font-semibold">Cancel</button>
+            </div>
+          </div>
+        ` : ''}
+        
+        ${app.routines.length === 0 ? `
+          <div class="bg-white rounded-lg shadow-lg p-8 text-center mb-4">
+            <p class="text-gray-600">No routines yet!</p>
+          </div>
+        ` : `
+          <div class="space-y-4 mb-4">
+          ${app.routines.map(r => `
+            <div class="bg-white rounded-lg shadow-lg p-4">
+              <div class="flex justify-between mb-2">
+                <div>
+                  <h3 class="font-bold text-lg">${r.name}</h3>
+                  <p class="text-sm text-gray-600">${r.segments.length} segments • ${r.segments.reduce((s,g) => s + g.minutes, 0)} min</p>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="editRoutineById('${r.id}')" class="p-2 hover:bg-gray-100 rounded">✏️</button>
+                  <button onclick="deleteRoutine('${r.id}'); return false;" class="p-2 hover:bg-gray-100 rounded">🗑️</button>
+                </div>
+              </div>
+              <button onclick="startRoutine('${r.id}')" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-2 font-semibold">Start</button>
+            </div>
+          `).join('')}
+          </div>
+        `}
+        
+        ${canAdd ? `
+          <button onclick="newRoutine()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-semibold">+ Create Routine</button>
+        ` : `
+          <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+            <p class="text-orange-800">Free: 3 routines max. Upgrade to Pro!</p>
+          </div>
+        `}
+      `;
+    }
+
+    function renderPlansView(root) {
+      const canAdd = app.isPro || app.plans.length < 1;
+      
+      root.innerHTML = `
+        <div class="flex justify-between items-center mb-6">
+          <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+          <h2 class="text-2xl font-bold">Training Plans</h2>
+          <div class="w-16"></div>
+        </div>
+
+        ${app.deletePlanConfirm ? `
+          <div class="bg-red-50 border-2 border-red-500 rounded-lg p-4 mb-4">
+            <p class="font-bold text-red-900 mb-3">Delete "${app.deletePlanConfirm.name}"?</p>
+            <div class="flex gap-3">
+              <button onclick="confirmDeletePlan()" class="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 font-semibold">Delete</button>
+              <button onclick="cancelDeletePlan()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-2 font-semibold">Cancel</button>
+            </div>
+          </div>
+        ` : ''}
+        
+        ${app.plans.length === 0 ? `
+          <div class="bg-white rounded-lg shadow-lg p-8 text-center mb-4">
+            <p class="text-gray-600">No training plans yet!</p>
+          </div>
+        ` : `
+          <div class="space-y-4 mb-4">
+          ${app.plans.map(p => {
+            if (!p.progress) {
+              p.progress = { minutes: 0, balls: 0, sessions: 0 };
+            }
+            
+            let current = 0;
+            if (p.goalType === 'minutes') {
+              current = p.progress.minutes;
+            } else if (p.goalType === 'balls') {
+              current = p.progress.balls;
+            } else if (p.goalType === 'sessions') {
+              current = p.progress.sessions;
+            }
+            
+            const progress = Math.min((current / p.goalValue) * 100, 100);
+            const isActive = app.activePlanId === p.id;
+            
+            return `
+              <div class="bg-white rounded-lg shadow-lg p-4 ${isActive ? 'border-2 border-green-600' : ''}">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <h3 class="font-bold text-lg">${p.name} ${isActive ? '<span class="text-green-600 text-sm">● Active</span>' : ''}</h3>
+                    <p class="text-sm text-gray-600">${p.goalValue} ${p.goalType} • Started ${new Date(p.startDate).toLocaleDateString()}</p>
+                  </div>
+                  <div class="flex gap-2">
+                    <button onclick="resetPlan('${p.id}')" class="p-2 hover:bg-gray-100 rounded" title="Reset start date">🔄</button>
+                    <button onclick="editPlanById('${p.id}')" class="p-2 hover:bg-gray-100 rounded">✏️</button>
+                    <button onclick="deletePlan('${p.id}'); return false;" class="p-2 hover:bg-gray-100 rounded">🗑️</button>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">${current} / ${p.goalValue} ${p.goalType}</span>
+                    <span class="text-gray-600">${progress.toFixed(0)}%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="bg-green-600 h-3 rounded-full transition-all" style="width:${progress}%"></div>
+                  </div>
+                </div>
+                
+                ${!isActive ? `
+                  <button onclick="setActivePlan('${p.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 font-semibold">Set as Active</button>
+                ` : `
+                  <button onclick="deactivatePlan()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-2 font-semibold">Deactivate</button>
+                `}
+              </div>
+            `;
+          }).join('')}
+          </div>
+        `}
+        
+        ${canAdd ? `
+          <button onclick="newPlan()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-semibold">+ Create Training Plan</button>
+        ` : `
+          <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+            <p class="text-orange-800">Free: 1 plan max. Upgrade to Pro for unlimited!</p>
+          </div>
+        `}
+      `;
+    }
+
+    function renderSettingsView(root) {
+      root.innerHTML = `
+        <div class="flex justify-between items-center mb-6">
+          <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+          <h2 class="text-2xl font-bold">Settings</h2>
+          <div class="w-16"></div>
+        </div>
+
+        ${app.showClearConfirm ? `
+          <div class="bg-red-50 border-2 border-red-500 rounded-lg p-4 mb-4">
+            <p class="font-bold text-red-900 mb-2">Clear All Data?</p>
+            <p class="text-sm text-red-800 mb-3">This will delete all routines, plans, and history. This cannot be undone!</p>
+            <div class="flex gap-3">
+              <button onclick="confirmClearStorage()" class="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 font-semibold">Clear All Data</button>
+              <button onclick="cancelClearStorage()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-2 font-semibold">Cancel</button>
+            </div>
+          </div>
+        ` : ''}
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h3 class="font-bold">Pro Version</h3>
+              <p class="text-sm text-gray-600">Unlock all features</p>
+            </div>
+            <button onclick="togglePro()" class="px-4 py-2 rounded-lg ${app.isPro ? 'bg-green-600 text-white' : 'bg-gray-200'}">
+              ${app.isPro ? '✓ Active' : 'Enable'}
+            </button>
+          </div>
+          
+          <div class="text-sm text-gray-600 space-y-1">
+            <p>• Unlimited routines (Free: 3)</p>
+            <p>• Routines any length (Free: 30 min max)</p>
+            <p>• Unlimited training plans (Free: 1)</p>
+            <p>• Full history (Free: last 3)</p>
+            <p>• Full statistics (Free: balls only)</p>
+          </div>
+        </div>
+
+        <button onclick="clearStorage()" class="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-3 font-semibold">
+          Clear All Data & Reset
+        </button>
+      `;
+    }
+
+    window.addSegment = () => {
+      if (!app.editRoutine.segments) app.editRoutine.segments = [];
+      app.editRoutine.segments.push({ name: '', minutes: 5 });
+      render();
+    };
+
+    window.removeSegment = (i) => {
+      app.editRoutine.segments.splice(i, 1);
+      render();
+    };
+
+    window.saveRoutine = () => {
+      const name = document.getElementById('rname').value.trim();
+      if (!name) return alert('Name required');
+      
+      const segments = [];
+      document.querySelectorAll('.segment-row').forEach((row, i) => {
+        const n = row.querySelector('.seg-name').value.trim();
+        const m = parseInt(row.querySelector('.seg-mins').value) || 0;
+        if (n && m > 0) segments.push({ name: n, minutes: m });
+      });
+      
+      if (segments.length === 0) return alert('Add at least one segment');
+      
+      const total = segments.reduce((s, seg) => s + seg.minutes, 0);
+      if (!app.isPro && total > 30) return alert('Free version limited to 30 minutes');
+      
+      if (app.editRoutine.isNew) {
+        app.routines.push({ id: app.editRoutine.id, name, segments });
+      } else {
+        const r = app.routines.find(r => r.id === app.editRoutine.id);
+        r.name = name;
+        r.segments = segments;
+      }
+      
+      app.editRoutine = null;
+      app.view = 'routines';
+      save();
+      render();
+    };
+
+    // Plan actions
+    window.newPlan = () => {
+      app.editPlan = {
+        id: Date.now().toString(),
+        name: '',
+        goalType: 'minutes',
+        goalValue: 300,
+        startDate: new Date().toISOString().split('T')[0],
+        isNew: true
+      };
+      app.view = 'editPlan';
+      render();
+    };
+
+    window.editPlanById = (id) => {
+      app.editPlan = app.plans.find(p => p.id === id);
+      app.view = 'editPlan';
+      render();
+    };
+
+    window.deletePlan = (id) => {
+      const plan = app.plans.find(p => p.id === id);
+      app.deletePlanConfirm = { id, name: plan?.name || 'this plan' };
+      const root = document.getElementById('app');
+      if (app.view === 'plans') {
+        renderPlansView(root);
+      }
+    };
+
+    window.confirmDeletePlan = () => {
+      if (app.activePlanId === app.deletePlanConfirm.id) {
+        app.activePlanId = null;
+      }
+      app.plans = app.plans.filter(p => p.id !== app.deletePlanConfirm.id);
+      app.deletePlanConfirm = null;
+      save();
+      const root = document.getElementById('app');
+      if (app.view === 'plans') {
+        renderPlansView(root);
+      }
+    };
+
+    window.cancelDeletePlan = () => {
+      app.deletePlanConfirm = null;
+      const root = document.getElementById('app');
+      if (app.view === 'plans') {
+        renderPlansView(root);
+      }
+    };
+
+    window.setActivePlan = (id) => {
+      app.activePlanId = id;
+      save();
+      render();
+    };
+
+    window.deactivatePlan = () => {
+      app.activePlanId = null;
+      save();
+      render();
+    };
+
+    window.savePlan = () => {
+      const name = document.getElementById('planName').value.trim();
+      const goalType = document.getElementById('goalType').value;
+      const goalValue = parseInt(document.getElementById('goalValue').value) || 0;
+      const startDate = document.getElementById('startDate').value;
+
+      if (!name) return alert('Name required');
+      if (goalValue <= 0) return alert('Goal value must be greater than 0');
+
+      if (app.editPlan.isNew) {
+        app.plans.push({
+          id: app.editPlan.id,
+          name,
+          goalType,
+          goalValue,
+          startDate
+        });
+      } else {
+        const p = app.plans.find(p => p.id === app.editPlan.id);
+        p.name = name;
+        p.goalType = goalType;
+        p.goalValue = goalValue;
+        p.startDate = startDate;
       }
 
-      function loadLastState() {
-        const saved = localStorage.getItem(STORAGE_LAST_STATE);
-        if (saved) {
-          const s = JSON.parse(saved);
-          elements.totalMins.value = s.totalMins; elements.numDrills.value = s.numDrills;
-          elements.warmup.value = s.warmup; elements.wrapup.value = s.wrapup;
-          elements.setupHeader.textContent = s.headerText || "SETUP";
-          rebuildDrills(s.numDrills, s.drills);
-        } else {
-          elements.totalMins.value = 15; elements.numDrills.value = 2; elements.warmup.value = 2; elements.wrapup.value = 3;
-          rebuildDrills(2, [5, 5]); elements.setupHeader.textContent = "SETUP";
+      app.editPlan = null;
+      app.view = 'plans';
+      save();
+      render();
+    };
+
+    window.resetPlan = (id) => {
+      const plan = app.plans.find(p => p.id === id);
+      if (plan) {
+        plan.startDate = new Date().toISOString().split('T')[0];
+        plan.progress = { minutes: 0, balls: 0, sessions: 0 };
+        save();
+        const root = document.getElementById('app');
+        if (app.view === 'plans') {
+          renderPlansView(root);
         }
       }
+    };
 
-      function loadStats() {
-        const history = JSON.parse(localStorage.getItem(STORAGE_SESSIONS) || '[]');
-        Entitlement.isPro = localStorage.getItem(STORAGE_PRO) === '1';
-        document.getElementById('pro-badge').textContent = Entitlement.isPro ? 'PRO' : 'FREE';
-        const now = Date.now();
-        const calc = (days) => {
-          const filtered = days ? history.filter(s => (now - s.timestamp) < days * 86400000) : history;
-          const b = filtered.reduce((a, s) => a + s.balls, 0);
-          const m = filtered.reduce((a, s) => a + s.actualMins, 0);
-          const r = filtered.filter(s => s.rating > 0).map(s => s.rating);
-          const avg = r.length ? (r.reduce((a, b) => a + b, 0) / r.length).toFixed(1) : '0';
-          return { b, m, avg };
+    window.resetStats = (period) => {
+      const now = new Date();
+      let cutoffDate;
+      
+      if (period === 'week') {
+        cutoffDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
+      } else if (period === 'month') {
+        cutoffDate = new Date(now - 30 * 24 * 60 * 60 * 1000);
+      } else if (period === 'all') {
+        app.history = [];
+        save();
+        render();
+        return;
+      }
+      
+      app.history = app.history.filter(h => new Date(h.date) < cutoffDate);
+      save();
+      render();
+    };
+
+    // Render
+    function render() {
+      console.log('=== RENDER START ===');
+      console.log('Current view:', app.view);
+      console.log('deleteConfirm:', app.deleteConfirm);
+      
+      const root = document.getElementById('app');
+      
+      if (!root) {
+        console.error('Root element not found!');
+        return;
+      }
+      
+      // Clean up any existing overlay
+      const existingOverlay = document.querySelector('.upgrade-overlay');
+      if (existingOverlay) {
+        existingOverlay.remove();
+      }
+      
+      console.log('About to check view conditions...');
+      
+      if (app.view === 'home') {
+        console.log('>> MATCHED: home');
+        const latestNote = app.history[0]?.notes || '';
+        const activePlan = app.plans.find(p => p.id === app.activePlanId);
+        
+        let planProgress = null;
+        if (activePlan) {
+          if (!activePlan.progress) {
+            activePlan.progress = { minutes: 0, balls: 0, sessions: 0 };
+          }
+          
+          let current = 0;
+          if (activePlan.goalType === 'minutes') {
+            current = activePlan.progress.minutes;
+          } else if (activePlan.goalType === 'balls') {
+            current = activePlan.progress.balls;
+          } else if (activePlan.goalType === 'sessions') {
+            current = activePlan.progress.sessions;
+          }
+          
+          planProgress = {
+            current,
+            goal: activePlan.goalValue,
+            percent: Math.min((current / activePlan.goalValue) * 100, 100)
+          };
+        }
+        
+        root.innerHTML = `
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <div class="flex justify-between items-center">
+              <h1 class="text-3xl font-bold text-green-700">Practice Caddie</h1>
+              <button onclick="goTo('settings')" class="p-2 hover:bg-gray-100 rounded">⚙️</button>
+            </div>
+            ${!app.isPro ? '<div class="text-sm text-orange-600 font-medium mt-2">Free Version</div>' : ''}
+          </div>
+          
+          ${latestNote ? `
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r-lg">
+              <p class="text-sm font-medium text-blue-900">Last Session Note:</p>
+              <p class="text-sm text-blue-800 mt-1">${latestNote}</p>
+            </div>
+          ` : ''}
+
+          ${activePlan ? `
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <h3 class="font-bold text-gray-800">Active Training Plan</h3>
+                  <p class="text-lg font-semibold text-green-700">${activePlan.name}</p>
+                </div>
+                <button onclick="deactivatePlan()" class="text-sm text-red-600 hover:underline">Deactivate</button>
+              </div>
+              <div class="mb-2">
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-gray-600">${planProgress.current} / ${planProgress.goal} ${activePlan.goalType}</span>
+                  <span class="text-gray-600">${planProgress.percent.toFixed(0)}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div class="bg-green-600 h-3 rounded-full transition-all" style="width:${planProgress.percent}%"></div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+          
+          <div class="grid grid-cols-2 gap-4">
+            <button onclick="goTo('routines')" class="bg-green-600 hover:bg-green-700 text-white rounded-lg p-6 text-center shadow-lg">
+              <div class="text-3xl mb-2">▶️</div>
+              <div class="font-semibold">Routines</div>
+            </button>
+            <button onclick="goTo('plans')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
+              <div class="text-3xl mb-2">🎯</div>
+              <div class="font-semibold">Training Plans</div>
+            </button>
+            <button onclick="goTo('history')" class="bg-purple-600 hover:bg-purple-700 text-white rounded-lg p-6 text-center shadow-lg">
+              <div class="text-3xl mb-2">📋</div>
+              <div class="font-semibold">History</div>
+            </button>
+            <button onclick="goTo('stats')" class="bg-orange-600 hover:bg-orange-700 text-white rounded-lg p-6 text-center shadow-lg">
+              <div class="text-3xl mb-2">📊</div>
+              <div class="font-semibold">Statistics</div>
+            </button>
+          </div>
+          
+          ${!app.isPro ? `
+            <div class="mt-6 text-center">
+              <button onclick="showUpgrade()" class="text-blue-600 hover:text-blue-700 font-semibold underline">
+                Upgrade to Pro →
+              </button>
+            </div>
+          ` : ''}
+        `;
+      }
+      
+      else if (app.view === 'routines') {
+        const canAdd = app.isPro || app.routines.length < 3;
+        root.innerHTML = `
+          <div class="flex justify-between items-center mb-6">
+            <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+            <h2 class="text-2xl font-bold">Routines</h2>
+            <div class="w-16"></div>
+          </div>
+          
+          ${app.routines.length === 0 ? `
+            <div class="bg-white rounded-lg shadow-lg p-8 text-center mb-4">
+              <p class="text-gray-600">No routines yet!</p>
+            </div>
+          ` : `
+            <div class="space-y-4 mb-4">
+              ${app.routines.map(r => `
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                  <div class="flex justify-between mb-2">
+                    <div>
+                      <h3 class="font-bold text-lg">${r.name}</h3>
+                      <p class="text-sm text-gray-600">${r.segments.length} segments • ${r.segments.reduce((s,g) => s + g.minutes, 0)} min</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button onclick="editRoutineById('${r.id}')" class="p-2 hover:bg-gray-100 rounded">✏️</button>
+                      <button onclick="deleteRoutine('${r.id}')" class="p-2 hover:bg-gray-100 rounded">🗑️</button>
+                    </div>
+                  </div>
+                  <button onclick="startRoutine('${r.id}')" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-2 font-semibold">Start</button>
+                </div>
+              `).join('')}
+            </div>
+          `}
+          
+          ${canAdd ? `
+            <button onclick="newRoutine()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-semibold">+ Create Routine</button>
+          ` : `
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+              <p class="text-orange-800">Free: 3 routines max. Upgrade to Pro!</p>
+            </div>
+          `}
+        `;
+      }
+      
+      else if (app.view === 'editRoutine') {
+        console.log('HIT EDIT ROUTINE BLOCK');
+        const total = (app.editRoutine.segments || []).reduce((s, seg) => s + seg.minutes, 0);
+        const exceeds = !app.isPro && total > 30;
+        root.innerHTML = `
+          <h2 class="text-2xl font-bold mb-6">${app.editRoutine.isNew ? 'Create' : 'Edit'} Routine</h2>
+          
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <label class="block text-sm font-medium mb-2">Name</label>
+            <input type="text" id="rname" value="${app.editRoutine.name}" class="w-full border rounded-lg px-3 py-2 mb-4" placeholder="Monday Practice">
+            
+            <div class="border-t pt-4 mb-4">
+              <h3 class="font-bold mb-3">Quick Setup</h3>
+              <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label class="block text-xs font-medium mb-1">Total Minutes</label>
+                  <input type="number" id="quickTotal" value="${app.quickSetup.totalMinutes}" class="w-full border rounded px-3 py-2" min="5">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1">Number of Drills</label>
+                  <input type="number" id="quickDrills" value="${app.quickSetup.numDrills}" class="w-full border rounded px-3 py-2" min="1">
+                </div>
+              </div>
+              <button onclick="quickGenerate()" class="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 text-sm font-medium">
+                Generate Routine
+              </button>
+            </div>
+            
+            <div class="flex justify-between mb-4">
+              <h3 class="font-bold">Segments</h3>
+              <span class="text-sm ${exceeds ? 'text-red-600 font-bold' : 'text-gray-600'}">
+                Total: ${total} min ${exceeds ? '(Max 30 for Free!)' : ''}
+              </span>
+            </div>
+            
+            <div class="space-y-3 mb-4">
+              ${(app.editRoutine.segments || []).map((s, i) => `
+                <div class="segment-row flex gap-2 bg-gray-50 p-3 rounded-lg">
+                  <input type="text" class="seg-name flex-1 border rounded px-2 py-1" value="${s.name}" placeholder="Segment name">
+                  <input type="number" class="seg-mins w-20 border rounded px-2 py-1" value="${s.minutes}" min="1">
+                  <span class="text-sm text-gray-600 self-center">min</span>
+                  <button onclick="removeSegment(${i})" class="p-1 hover:bg-gray-200 rounded">🗑️</button>
+                </div>
+              `).join('')}
+            </div>
+            
+            <button onclick="addSegment()" class="w-full border-2 border-dashed border-gray-300 rounded-lg py-2 hover:border-gray-400">+ Add Segment Manually</button>
+          </div>
+          
+          <div class="flex gap-3">
+            <button onclick="saveRoutine()" class="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold">Save</button>
+            <button onclick="goTo('routines')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-3 font-semibold">Cancel</button>
+          </div>
+        `;
+      }
+      
+      else if (app.view === 'session') {
+        console.log('HIT SESSION BLOCK');
+        const seg = app.session.segments[app.segmentIndex];
+        const m = Math.floor(app.timeLeft / 60);
+        const s = app.timeLeft % 60;
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-green-600 to-blue-600 flex items-center justify-center p-4 -m-4">
+            <div class="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full">
+              <h2 class="text-2xl font-bold text-center mb-2">${app.session.name}</h2>
+              <div class="text-center text-gray-600 mb-6">Segment ${app.segmentIndex + 1} of ${app.session.segments.length}</div>
+              
+              <div class="bg-green-50 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold text-center mb-4">${seg.name}</h3>
+                <div class="text-6xl font-bold text-center text-green-700">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>
+              </div>
+              
+              <div class="space-y-3">
+                <button onclick="skipSegment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-semibold">⏭️ Skip</button>
+                <button onclick="endSession()" class="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-3 font-semibold">⏹️ End</button>
+              </div>
+              
+              <div class="mt-6 pt-6 border-t text-sm">
+                ${app.session.segments.map((sg, i) => `
+                  <div class="py-1 ${i === app.segmentIndex ? 'font-bold text-green-700' : ''} ${i < app.segmentIndex ? 'line-through text-gray-400' : ''}">${sg.name} (${sg.minutes} min)</div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      else if (app.view === 'complete') {
+        console.log('HIT COMPLETE BLOCK');
+        root.innerHTML = `
+          <div class="bg-white rounded-lg shadow-lg p-6 mt-8 max-w-md mx-auto">
+            <h2 class="text-2xl font-bold text-center mb-6 text-green-700">Session Complete!</h2>
+            
+            <div class="space-y-4 mb-6">
+              <div>
+                <label class="block text-sm font-medium mb-2">Balls Hit</label>
+                <input type="number" id="balls" class="w-full border rounded-lg px-3 py-2" placeholder="0">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-2">Rate (0-5)</label>
+                <div class="flex gap-2 justify-center">
+                  ${[0,1,2,3,4,5].map(v => `<button onclick="selectRating(${v})" data-rating="${v}" class="w-12 h-12 rounded-lg border-2 font-bold bg-white text-gray-600 border-gray-300">${v}</button>`).join('')}
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-2">Notes</label>
+                <textarea id="notes" class="w-full border rounded-lg px-3 py-2 h-24" placeholder="How did it go?"></textarea>
+              </div>
+            </div>
+            
+            <div class="flex gap-3">
+              <button onclick="saveSession()" class="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold">Save</button>
+              <button onclick="discardSession()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-3 font-semibold">Discard</button>
+            </div>
+          </div>
+        `;
+      }
+      
+      else if (app.view === 'plans') {
+        console.log('HIT PLANS BLOCK');
+        renderPlansView(root);
+      }
+      
+      else if (app.view === 'editPlan') {
+        console.log('HIT EDIT PLAN BLOCK');
+        root.innerHTML = `
+          <h2 class="text-2xl font-bold mb-6">${app.editPlan.isNew ? 'Create' : 'Edit'} Training Plan</h2>
+          
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium mb-2">Plan Name</label>
+                <input type="text" id="planName" value="${app.editPlan.name}" class="w-full border rounded-lg px-3 py-2" placeholder="e.g. January Goal">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-2">Goal Type</label>
+                <select id="goalType" class="w-full border rounded-lg px-3 py-2">
+                  <option value="minutes" ${app.editPlan.goalType === 'minutes' ? 'selected' : ''}>Minutes</option>
+                  <option value="balls" ${app.editPlan.goalType === 'balls' ? 'selected' : ''}>Balls</option>
+                  <option value="sessions" ${app.editPlan.goalType === 'sessions' ? 'selected' : ''}>Sessions</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-2">Goal Value</label>
+                <input type="number" id="goalValue" value="${app.editPlan.goalValue}" class="w-full border rounded-lg px-3 py-2" min="1">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-2">Start Date</label>
+                <input type="date" id="startDate" value="${app.editPlan.startDate}" class="w-full border rounded-lg px-3 py-2">
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex gap-3">
+            <button onclick="savePlan()" class="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold">Save</button>
+            <button onclick="goTo('plans')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-3 font-semibold">Cancel</button>
+          </div>
+        `;
+      }
+      
+      else if (app.view === 'stats') {
+        console.log('HIT STATS BLOCK');
+        const now = new Date();
+        const day7 = now - 7 * 24 * 60 * 60 * 1000;
+        const day30 = now - 30 * 24 * 60 * 60 * 1000;
+
+        const calc = (sessions) => ({
+          balls: sessions.reduce((s, h) => s + (h.ballsHit || 0), 0),
+          minutes: sessions.reduce((s, h) => s + (h.totalMinutes || 0), 0),
+          sessions: sessions.length,
+          avgRating: sessions.length ? (sessions.reduce((s, h) => s + (h.rating || 0), 0) / sessions.length).toFixed(1) : 0
+        });
+
+        const stats = {
+          week: calc(app.history.filter(h => new Date(h.date).getTime() >= day7)),
+          month: calc(app.history.filter(h => new Date(h.date).getTime() >= day30)),
+          lifetime: calc(app.history)
         };
-        const w = calc(7), m = calc(30), l = calc(0);
-        elements.ballsWeek.textContent = w.b; elements.subWeek.textContent = `${w.m}m • ${w.avg}★`;
-        elements.ballsMonth.textContent = m.b; elements.subMonth.textContent = `${m.m}m • ${m.avg}★`;
-        elements.ballsLife.textContent = l.b; elements.subLife.textContent = `${l.m}m • ${l.avg}★`;
-        elements.lastNotes.textContent = history[0]?.notes || "No history yet.";
-        const blur = Entitlement.isPro ? 'none' : 'blur(4px)';
-        [elements.ballsWeek, elements.subWeek, elements.ballsMonth, elements.subMonth, elements.ballsLife, elements.subLife, elements.lastNotes].forEach(el => el.style.filter = blur);
+
+        const blur = !app.isPro ? 'filter blur-sm' : '';
+
+        root.innerHTML = `
+          <div class="flex justify-between items-center mb-6">
+            <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+            <h2 class="text-2xl font-bold">Statistics</h2>
+            <div class="w-16"></div>
+          </div>
+
+          ${!app.isPro ? `
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4 text-center">
+              <p class="text-orange-800">Free users see balls only. Upgrade to Pro for full statistics!</p>
+            </div>
+          ` : ''}
+
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-center">
+                <thead>
+                  <tr class="border-b-2 border-gray-300">
+                    <th class="py-3 px-2 text-left font-bold text-gray-700"></th>
+                    <th class="py-3 px-2 font-bold text-gray-700">Past 7 Days</th>
+                    <th class="py-3 px-2 font-bold text-gray-700">Past 30 Days</th>
+                    <th class="py-3 px-2 font-bold text-gray-700">Lifetime</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-gray-200">
+                    <td class="py-3 px-2 text-left font-medium text-gray-700">Balls</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-green-600">${stats.week.balls}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-green-600">${stats.month.balls}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-green-600">${stats.lifetime.balls}</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 ${blur}">
+                    <td class="py-3 px-2 text-left font-medium text-gray-700">Minutes</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-blue-600">${stats.week.minutes}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-blue-600">${stats.month.minutes}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-blue-600">${stats.lifetime.minutes}</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 ${blur}">
+                    <td class="py-3 px-2 text-left font-medium text-gray-700">Sessions</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-purple-600">${stats.week.sessions}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-purple-600">${stats.month.sessions}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-purple-600">${stats.lifetime.sessions}</td>
+                  </tr>
+                  <tr class="${blur}">
+                    <td class="py-3 px-2 text-left font-medium text-gray-700">Avg Rating</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-orange-600">${stats.week.avgRating}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-orange-600">${stats.month.avgRating}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-orange-600">${stats.lifetime.avgRating}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-lg p-4">
+            <h3 class="font-bold text-gray-800 mb-3">Reset Statistics</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="if(confirm('Delete all sessions from the past 7 days?')) resetStats('week')" class="bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-semibold">Reset 7 Days</button>
+              <button onclick="if(confirm('Delete all sessions from the past 30 days?')) resetStats('month')" class="bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-semibold">Reset 30 Days</button>
+              <button onclick="if(confirm('Delete ALL session history? This cannot be undone!')) resetStats('all')" class="col-span-2 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 font-semibold">Reset All History</button>
+            </div>
+          </div>
+        `;
       }
-
-      function updateTimer() {
-        if (!sessionRunning || isPaused) return;
-        const rem = Math.ceil((sectionEndTimestamp - Date.now()) / 1000);
-        if (rem <= 0) { skipSection(); return; }
-        elements.timeRemaining.textContent = formatSeconds(rem);
-        elements.progressBar.style.width = ((rem / sectionDurationSec) * 100) + "%";
+      
+      else if (app.view === 'history') {
+        console.log('HIT HISTORY BLOCK');
+        const visible = app.isPro ? app.history : app.history.slice(0, 3);
+        root.innerHTML = `
+          <div class="flex justify-between items-center mb-6">
+            <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+            <h2 class="text-2xl font-bold">History</h2>
+            <div class="w-16"></div>
+          </div>
+          
+          ${!app.isPro && app.history.length > 3 ? `
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4 text-center">
+              <p class="text-orange-800">Free: last 3 sessions. Upgrade for full history!</p>
+            </div>
+          ` : ''}
+          
+          ${visible.length === 0 ? `
+            <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+              <p class="text-gray-600">No sessions yet!</p>
+            </div>
+          ` : `
+            <div class="space-y-4">
+              ${visible.map(h => `
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                  <div class="flex justify-between mb-2">
+                    <div>
+                      <h3 class="font-bold">${h.routineName}</h3>
+                      <p class="text-sm text-gray-600">${new Date(h.date).toLocaleDateString()}</p>
+                    </div>
+                    <div class="text-right">
+                      <div class="font-bold text-green-600">${h.ballsHit} balls</div>
+                      <div class="text-sm text-gray-600">${h.totalMinutes} min • ⭐${h.rating}</div>
+                    </div>
+                  </div>
+                  ${h.notes ? `<p class="text-sm text-gray-700 mt-2 p-2 bg-blue-50 rounded">${h.notes}</p>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          `}
+        `;
       }
+      
+      else if (app.view === 'settings') {
+        console.log('HIT SETTINGS BLOCK');
+        root.innerHTML = `
+          <div class="flex justify-between items-center mb-6">
+            <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+            <h2 class="text-2xl font-bold">Settings</h2>
+            <div class="w-16"></div>
+          </div>
+          
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="font-bold">Pro Version</h3>
+                <p class="text-sm text-gray-600">Unlock all features</p>
+              </div>
+              <button onclick="togglePro()" class="px-4 py-2 rounded-lg ${app.isPro ? 'bg-green-600 text-white' : 'bg-gray-200'}">
+                ${app.isPro ? '✓ Active' : 'Enable'}
+              </button>
+            </div>
+            
+            <div class="text-sm text-gray-600 space-y-1">
+              <p>• Unlimited routines (Free: 3)</p>
+              <p>• Routines any length (Free: 30 min max)</p>
+              <p>• Full history (Free: last 3)</p>
+            </div>
+          </div>
 
-      function beginSection() {
-        const s = sectionsRuntime[currentSectionIndex];
-        sectionDurationSec = s.durationSec; sectionEndTimestamp = Date.now() + (s.durationSec * 1000);
-        elements.currentSectionName.textContent = s.name; elements.timeRemaining.textContent = formatSeconds(s.durationSec);
-        elements.nextSection.textContent = sectionsRuntime[currentSectionIndex + 1] ? `Next: ${sectionsRuntime[currentSectionIndex + 1].name}` : "Next: Done";
-        clearInterval(timerId); timerId = setInterval(updateTimer, 250);
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <h3 class="font-bold mb-3">About Practice Caddie</h3>
+            <div class="text-sm text-gray-700 space-y-2">
+              <p><strong>Version:</strong> 1.1</p>
+              <p>Practice Caddie helps golfers structure and track their practice sessions with custom routines, timers, and detailed statistics.</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <h3 class="font-bold mb-3">Contact & Support</h3>
+            <div class="text-sm text-gray-700 space-y-2">
+              <p><strong>Email:</strong> support@practicecaddie.com</p>
+              <p><strong>Website:</strong> www.practicecaddie.com</p>
+              <p>For bug reports, feature requests, or general support, please contact us via email.</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <h3 class="font-bold mb-3">Privacy Policy</h3>
+            <div class="text-sm text-gray-700 space-y-2">
+              <p><strong>Data Storage:</strong> All practice data is stored locally on your device. We do not collect, transmit, or store any personal information on external servers.</p>
+              <p><strong>Analytics:</strong> This app does not use analytics or tracking services.</p>
+              <p><strong>Permissions:</strong> This app does not require any special device permissions beyond basic storage for saving your practice data.</p>
+              <p><strong>Data Deletion:</strong> You can delete all app data at any time using the "Clear All Data & Reset" button below.</p>
+              <p>For our complete privacy policy, visit: www.practicecaddie.com/privacy</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <h3 class="font-bold mb-3">Terms of Service</h3>
+            <div class="text-sm text-gray-700 space-y-2">
+              <p>By using Practice Caddie, you agree to use the app for lawful purposes only. The app is provided "as is" without warranties of any kind.</p>
+              <p>For complete terms of service, visit: www.practicecaddie.com/terms</p>
+            </div>
+          </div>
+
+          <button onclick="clearStorage()" class="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-3 font-semibold mb-4">
+            Clear All Data & Reset
+          </button>
+
+          <div class="text-center text-sm text-gray-500">
+            <p>© 2025 Practice Caddie. All rights reserved.</p>
+          </div>
+        `;
       }
-
-      function skipSection() {
-        currentSectionIndex++;
-        if (currentSectionIndex >= sectionsRuntime.length) { endSession(true); } else { beginSection(); }
+      
+      // Upgrade overlay
+      if (app.showUpgradeOverlay) {
+        const overlay = document.createElement('div');
+        overlay.className = 'upgrade-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+        overlay.onclick = (e) => {
+          if (e.target === overlay) closeUpgrade();
+        };
+        
+        overlay.innerHTML = `
+          <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-2xl font-bold text-gray-800">Upgrade to Pro</h2>
+              <button onclick="closeUpgrade()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            
+            <div class="mb-6">
+              <h3 class="font-bold text-gray-800 mb-3">Free Version</h3>
+              <div class="text-sm text-gray-600 space-y-2">
+                <p>✓ Up to 3 custom routines</p>
+                <p>✓ 30 minute max per routine</p>
+                <p>✓ Last 3 sessions in history</p>
+                <p>✓ Ball count tracking</p>
+              </div>
+            </div>
+            
+            <div class="mb-6">
+              <h3 class="font-bold text-green-700 mb-3">Pro Version</h3>
+              <div class="text-sm text-gray-700 space-y-2">
+                <p>✓ <strong>Unlimited</strong> custom routines</p>
+                <p>✓ <strong>Unlimited</strong> routine length</p>
+                <p>✓ <strong>Full</strong> session history</p>
+                <p>✓ Complete statistics tracking</p>
+                <p>✓ Training plan progress</p>
+                <p>✓ Session ratings and notes</p>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <button onclick="upgradeToPro()" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold">
+                Upgrade Now
+              </button>
+              <button onclick="closeUpgrade()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg py-3 font-semibold">
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(overlay);
       }
+    }
 
-      function startSession() {
-        const durs = [];
-        if (elements.warmup.value > 0) durs.push({ name: 'Warm-up', durationSec: elements.warmup.value * 60 });
-        drillInputs.forEach((i, idx) => { if (i.value > 0) durs.push({ name: `Drill ${idx+1}`, durationSec: i.value * 60 }); });
-        if (elements.wrapup.value > 0) durs.push({ name: 'Wrap-up', durationSec: elements.wrapup.value * 60 });
-        if (!durs.length) return;
-        sectionsRuntime = durs; currentSectionIndex = 0; sessionRunning = true; sessionStartTime = Date.now();
-        elements.timerPanel.style.display = 'block'; elements.setupSection.style.display = 'none';
-        elements.startBtn.textContent = "Skip Section"; elements.startBtn.classList.replace('btn-primary', 'btn-secondary');
-        beginSection();
-      }
-
-      function endSession(showLog) {
-        sessionRunning = false; clearInterval(timerId);
-        elements.timerPanel.style.display = 'none'; elements.setupSection.style.display = 'block';
-        elements.startBtn.textContent = "Start Practice Session"; elements.startBtn.classList.replace('btn-secondary', 'btn-primary');
-        if (showLog) {
-          document.getElementById('actual-time-display').textContent = Math.round((Date.now() - sessionStartTime - totalPausedMs) / 60000);
-          document.getElementById('session-end-overlay').classList.add('active');
-        }
-      }
-
-      elements.startBtn.onclick = () => sessionRunning ? skipSection() : startSession();
-      elements.pauseBtn.onclick = () => {
-        isPaused = !isPaused;
-        if (isPaused) { pauseStartTime = Date.now(); pausedRemainingSec = Math.ceil((sectionEndTimestamp - Date.now()) / 1000); clearInterval(timerId); elements.pauseBtn.textContent = "Resume"; }
-        else { totalPausedMs += (Date.now() - pauseStartTime); sectionEndTimestamp = Date.now() + (pausedRemainingSec * 1000); timerId = setInterval(updateTimer, 250); elements.pauseBtn.textContent = "Pause"; }
-      };
-      elements.stopBtn.onclick = () => confirm("End early?") && endSession(true);
-
-      document.getElementById('save-log-btn').onclick = () => {
-        const history = JSON.parse(localStorage.getItem(STORAGE_SESSIONS) || '[]');
-        const rating = parseInt(document.querySelector('input[name="rating"]:checked').value);
-        history.unshift({ timestamp: Date.now(), balls: parseInt(document.getElementById('balls-hit-input').value) || 0, actualMins: parseInt(document.getElementById('actual-time-display').textContent) || 0, rating, notes: Entitlement.isPro ? document.getElementById('notes-input').value : '' });
-        localStorage.setItem(STORAGE_SESSIONS, JSON.stringify(history));
-        loadStats(); document.getElementById('session-end-overlay').classList.remove('active');
-      };
-
-      document.getElementById('auto-fill-btn').onclick = () => {
-        const total = parseInt(elements.totalMins.value) || 15;
-        elements.warmup.value = 2; elements.wrapup.value = 3;
-        const count = parseInt(elements.numDrills.value) || 1;
-        const perDrill = Math.floor((total - 5) / count);
-        rebuildDrills(count, Array(count).fill(perDrill));
-        elements.setupHeader.textContent = "SETUP"; saveState();
-      };
-
-      document.getElementById('reset-all-link').onclick = () => { if(confirm("Reset everything?")) { localStorage.clear(); location.reload(); } };
-      document.getElementById('toggle-pro-link').onclick = () => { localStorage.setItem(STORAGE_PRO, Entitlement.isPro ? '0' : '1'); loadStats(); };
-      document.getElementById('skip-log-btn').onclick = () => document.getElementById('session-end-overlay').classList.remove('active');
-      document.getElementById('view-history-link').onclick = () => document.getElementById('history-overlay').classList.add('active');
-      document.getElementById('close-history-btn').onclick = () => document.getElementById('history-overlay').classList.remove('active');
-      document.getElementById('view-plans-link').onclick = () => document.getElementById('plans-overlay').classList.add('active');
-      document.getElementById('close-plans-btn').onclick = () => document.getElementById('plans-overlay').classList.remove('active');
-
-      elements.numDrills.onchange = () => { rebuildDrills(parseInt(elements.numDrills.value) || 1); elements.setupHeader.textContent = "SETUP"; saveState(); };
-      elements.totalMins.onchange = elements.warmup.onchange = elements.wrapup.onchange = () => { elements.setupHeader.textContent = "SETUP"; saveState(); };
-
-      loadLastState(); loadStats();
-    })();
+    load();
   </script>
 </body>
 </html>

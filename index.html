@@ -1,15 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Practice Caddie</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Caddie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root{
+          --bg-primary:#F7F8F6;
+          --surface-primary:#FFFFFF;
+          --border-subtle:#D9DED8;
+          --text-primary:#1F2A24;
+          --text-secondary:#5F6D64;
+          --accent-primary:#2F6F4E;
+          --accent-primary-dark:#275C41;
+          --focus-ring:rgba(47,111,78,.35);
+          --danger:#9B2C2C;
+        }
+        html,body{height:100%}
+        body.pc-body{
+          background: radial-gradient(1200px 600px at 20% 0%, rgba(47,111,78,.08), transparent 55%),
+                      radial-gradient(900px 500px at 90% 10%, rgba(95,109,100,.08), transparent 60%),
+                      var(--bg-primary);
+          color:var(--text-primary);
+          -webkit-font-smoothing:antialiased;
+          -moz-osx-font-smoothing:grayscale;
+        }
+        .pc-card{
+          background:var(--surface-primary);
+          border:1px solid var(--border-subtle);
+          border-radius:14px;
+          box-shadow:0 1px 2px rgba(0,0,0,.05);
+        }
+        .pc-card-strong{
+          background:var(--surface-primary);
+          border:1px solid var(--border-subtle);
+          border-radius:16px;
+          box-shadow:0 10px 24px rgba(31,42,36,.10);
+        }
+        .pc-rule{border-top:1px solid var(--border-subtle)}
+        .pc-accent-rule{height:2px;background:var(--accent-primary);border-radius:999px}
+        .pc-focus:focus{outline:none; box-shadow:0 0 0 3px var(--focus-ring); border-color:var(--accent-primary)}
+        input.pc-input, select.pc-input, textarea.pc-input{
+          background:var(--surface-primary);
+          border:1px solid var(--border-subtle);
+          border-radius:12px;
+          padding:.6rem .8rem;
+          width:100%;
+        }
+        input.pc-input::placeholder, textarea.pc-input::placeholder{color:rgba(95,109,100,.75)}
+        .pc-btn{
+          border-radius:12px;
+          font-weight:600;
+          padding:.75rem 1rem;
+          transition:transform .02s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+          -webkit-tap-highlight-color:transparent;
+        }
+        .pc-btn:active{transform:translateY(1px)}
+        .pc-btn-primary{background:var(--accent-primary); color:#fff}
+        .pc-btn-primary:hover{background:var(--accent-primary-dark)}
+        .pc-btn-secondary{background:#F0F2F0; color:var(--text-primary); border:1px solid var(--border-subtle)}
+        .pc-btn-secondary:hover{background:#E8ECE9}
+        .pc-btn-danger{background:var(--danger); color:#fff}
+        .pc-btn-danger:hover{filter:brightness(.92)}
+        .pc-link{color:var(--accent-primary)}
+        .pc-link:hover{color:var(--accent-primary-dark); text-decoration:underline}
+        .pc-tile{
+          background:var(--surface-primary);
+          border:1px solid var(--border-subtle);
+          border-radius:16px;
+          padding:1.25rem;
+          text-align:left;
+          box-shadow:0 1px 2px rgba(0,0,0,.05);
+          transition:transform .02s ease, border-color .15s ease, box-shadow .15s ease;
+          -webkit-tap-highlight-color:transparent;
+        }
+        .pc-tile:hover{border-color:rgba(47,111,78,.35); box-shadow:0 6px 16px rgba(31,42,36,.08)}
+        .pc-tile:active{transform:translateY(1px)}
+        .pc-tile-icon{
+          width:42px;height:42px;border-radius:12px;
+          display:flex;align-items:center;justify-content:center;
+          background:rgba(47,111,78,.10);
+          color:var(--accent-primary);
+          font-size:20px;
+          margin-bottom:.75rem;
+        }
+        .pc-session-bg{
+          background: radial-gradient(900px 500px at 30% 0%, rgba(47,111,78,.25), transparent 60%),
+                      radial-gradient(900px 500px at 90% 20%, rgba(95,109,100,.18), transparent 60%),
+                      linear-gradient(180deg, #0F1713 0%, #16241D 100%);
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
-  <div id="app" class="max-w-2xl mx-auto p-4"></div>
+<body class="min-h-screen pc-body">
+<div id="app" class="max-w-2xl mx-auto p-4"></div>
 
-  <script>
+<script>
     let app = {
       view: 'home',
       isPro: false,
@@ -26,8 +112,52 @@
       quickSetup: { totalMinutes: 15, numDrills: 2 },
       deleteConfirm: null,
       showClearConfirm: false,
-      showUpgradeOverlay: false
+      showUpgradeOverlay: false,
+      hasLoaded: false
     };
+
+    // --- Android Billing bridge (Pro entitlement) ---
+    // Native Android pushes updates via: window.__androidBilling.onProStatusChanged(isPro, source)
+    // If the push arrives before this handler exists, native stores window.__androidPro / window.__androidProSource.
+    function applyProStatus(isPro, source) {
+      try {
+        const next = !!isPro;
+        if (app.isPro !== next) {
+          app.isPro = next;
+        }
+        // Avoid overwriting persisted data before initial load completes.
+        if (app.hasLoaded) {
+          save();
+        }
+        console.log('Pro status applied:', next, 'source:', source);
+        render();
+      } catch (e) {
+        console.log('applyProStatus error:', e);
+      }
+    }
+
+    window.__androidBilling = window.__androidBilling || {};
+    window.__androidBilling.onProStatusChanged = (isPro, source) => {
+      applyProStatus(isPro, source);
+    };
+
+    // Consume any buffered native value (if native fired before JS was ready)
+    if (typeof window.__androidPro !== 'undefined') {
+      applyProStatus(!!window.__androidPro, window.__androidProSource || 'native-buffer');
+    }
+
+    // Pull current value from the JS bridge on startup (robust even if no callback fires)
+    try {
+      if (window.AndroidBilling && typeof window.AndroidBilling.getProStatus === 'function') {
+        const current = !!window.AndroidBilling.getProStatus();
+        applyProStatus(current, 'getProStatus');
+      }
+    } catch (e) {
+      console.log('AndroidBilling.getProStatus failed:', e);
+    }
+    // --- end Android Billing bridge ---
+
+
 
     // Storage
     async function save() {
@@ -39,7 +169,7 @@
           activePlanId: app.activePlanId,
           history: app.history
         });
-        
+
         // Try persistent storage first, fallback to localStorage
         try {
           await window.storage.set('golfApp', data);
@@ -54,7 +184,7 @@
     async function load() {
       try {
         let dataStr = null;
-        
+
         // Try persistent storage first, fallback to localStorage
         try {
           const data = await window.storage.get('golfApp');
@@ -64,7 +194,7 @@
         } catch(e) {
           dataStr = localStorage.getItem('golfApp');
         }
-        
+
         if (dataStr) {
           const parsed = JSON.parse(dataStr);
           app.isPro = parsed.isPro || false;
@@ -73,7 +203,7 @@
           app.activePlanId = parsed.activePlanId || null;
           app.history = parsed.history || [];
         }
-        
+
         // Add default routine if none exist
         if (app.routines.length === 0) {
           app.routines.push({
@@ -103,6 +233,7 @@
         });
         await save();
       }
+      app.hasLoaded = true;
       render();
     }
 
@@ -151,9 +282,25 @@
 
     // Actions
     window.goTo = (view) => {
-      app.view = view;
-      render();
-    };
+  app._navStack = app._navStack || [];
+  if (app.view && app.view !== view) app._navStack.push(app.view);
+  app.view = view;
+  render();
+};
+
+window.__handleAndroidBack = () => {
+  if (app.showUpgradeOverlay) {
+    app.showUpgradeOverlay = false;
+    render();
+    return true;
+  }
+  if (app._navStack && app._navStack.length) {
+    app.view = app._navStack.pop();
+    render();
+    return true;
+  }
+  return false;
+};
 
     window.togglePro = () => {
       app.isPro = !app.isPro;
@@ -172,8 +319,17 @@
     };
 
     window.upgradeToPro = () => {
-      // Placeholder for upgrade flow - will be implemented later
-      alert('Upgrade functionality will be implemented soon!');
+      try {
+        if (window.AndroidBilling && typeof window.AndroidBilling.startPurchase === 'function') {
+          window.AndroidBilling.startPurchase();
+        } else {
+          alert('Billing is not available yet. Please try again in a moment.');
+          console.log('AndroidBilling.startPurchase not available');
+        }
+      } catch (e) {
+        console.log('startPurchase failed:', e);
+        alert('Could not start purchase. Please try again.');
+      }
     };
 
 
@@ -217,7 +373,16 @@
     window.startRoutine = (id) => {
       const routine = app.routines.find(r => r.id === id);
       if (!routine || routine.segments.length === 0) return;
-      
+
+      // Acquire wake lock to keep screen on
+      if (typeof AndroidWakeLock !== 'undefined') {
+        try {
+          AndroidWakeLock.acquireWakeLock();
+        } catch (e) {
+          console.error('Failed to acquire wake lock:', e);
+        }
+      }
+
       app.session = {
         routineId: routine.id,
         name: routine.name,
@@ -247,6 +412,16 @@
 
     window.endSession = () => {
       stopTimer();
+
+      // Release wake lock
+      if (typeof AndroidWakeLock !== 'undefined') {
+        try {
+          AndroidWakeLock.releaseWakeLock();
+        } catch (e) {
+          console.error('Failed to release wake lock:', e);
+        }
+      }
+
       app.view = 'complete';
       render();
     };
@@ -255,7 +430,16 @@
       const balls = parseInt(document.getElementById('balls').value) || 0;
       const rating = parseInt(document.querySelector('.rating-selected')?.dataset.rating || 0);
       const notes = document.getElementById('notes').value;
-      
+
+      // Release wake lock
+      if (typeof AndroidWakeLock !== 'undefined') {
+        try {
+          AndroidWakeLock.releaseWakeLock();
+        } catch (e) {
+          console.error('Failed to release wake lock:', e);
+        }
+      }
+
       const total = app.session.segments.reduce((s, seg) => s + seg.minutes, 0);
       app.history.unshift({
         id: Date.now().toString(),
@@ -267,7 +451,7 @@
         rating: rating,
         notes: notes
       });
-      
+
       // If there's an active plan, add this session's data to it
       if (app.activePlanId) {
         const activePlan = app.plans.find(p => p.id === app.activePlanId);
@@ -280,7 +464,7 @@
           activePlan.progress.sessions += 1;
         }
       }
-      
+
       app.session = null;
       app.view = 'home';
       save();
@@ -288,6 +472,15 @@
     };
 
     window.discardSession = () => {
+      // Release wake lock
+      if (typeof AndroidWakeLock !== 'undefined') {
+        try {
+          AndroidWakeLock.releaseWakeLock();
+        } catch (e) {
+          console.error('Failed to release wake lock:', e);
+        }
+      }
+
       app.session = null;
       app.view = 'home';
       render();
@@ -297,7 +490,7 @@
       document.querySelectorAll('[data-rating]').forEach(btn => {
         btn.className = 'w-12 h-12 rounded-lg border-2 font-bold bg-white text-gray-600 border-gray-300';
       });
-      event.target.className = 'w-12 h-12 rounded-lg border-2 font-bold bg-green-600 text-white border-green-600 rating-selected';
+      event.target.className = 'w-12 h-12 rounded-lg border-2 font-bold bg-green-600 text-white border-[#2F6F4E] rating-selected';
     };
 
     window.newRoutine = () => {
@@ -309,34 +502,34 @@
     window.quickGenerate = () => {
       const total = parseInt(document.getElementById('quickTotal').value) || 15;
       const numDrills = parseInt(document.getElementById('quickDrills').value) || 2;
-      
+
       // Fixed times for warm-up and full swings
       const warmupTime = 2;
       const fullSwingTime = 3;
       const remainingTime = total - warmupTime - fullSwingTime;
-      
+
       if (remainingTime < numDrills) {
         alert('Not enough time for that many drills. Increase total time or reduce drills.');
         return;
       }
-      
+
       const drillTime = Math.floor(remainingTime / numDrills);
-      
+
       // Preserve the routine name
       const currentName = document.getElementById('rname').value;
-      
+
       app.editRoutine.segments = [
         { name: 'Warm-up', minutes: warmupTime }
       ];
-      
+
       for (let i = 1; i <= numDrills; i++) {
         app.editRoutine.segments.push({ name: `Drill ${i}`, minutes: drillTime });
       }
-      
+
       app.editRoutine.segments.push({ name: 'Full swings', minutes: fullSwingTime });
-      
+
       render();
-      
+
       // Restore the name after render
       setTimeout(() => {
         document.getElementById('rname').value = currentName;
@@ -352,7 +545,7 @@
     window.deleteRoutine = (id) => {
       const routine = app.routines.find(r => r.id === id);
       app.deleteConfirm = { id, name: routine?.name || 'this routine' };
-      
+
       // Force re-render without changing view
       const root = document.getElementById('app');
       if (app.view === 'routines') {
@@ -382,7 +575,7 @@
       const canAdd = app.isPro || app.routines.length < 3;
       root.innerHTML = `
         <div class="flex justify-between items-center mb-6">
-          <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+          <button onclick="goTo('home')" class="pc-link">← Back</button>
           <h2 class="text-2xl font-bold">Routines</h2>
           <div class="w-16"></div>
         </div>
@@ -391,20 +584,20 @@
           <div class="bg-red-50 border-2 border-red-500 rounded-lg p-4 mb-4">
             <p class="font-bold text-red-900 mb-3">Delete "${app.deleteConfirm.name}"?</p>
             <div class="flex gap-3">
-              <button onclick="confirmDelete()" class="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 font-semibold">Delete</button>
-              <button onclick="cancelDelete()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-2 font-semibold">Cancel</button>
+              <button onclick="confirmDelete()" class="flex-1 pc-btn pc-btn-danger">Delete</button>
+              <button onclick="cancelDelete()" class="flex-1 pc-btn pc-btn-secondary">Cancel</button>
             </div>
           </div>
         ` : ''}
-        
+
         ${app.routines.length === 0 ? `
-          <div class="bg-white rounded-lg shadow-lg p-8 text-center mb-4">
+          <div class="pc-card p-8 text-center mb-4">
             <p class="text-gray-600">No routines yet!</p>
           </div>
         ` : `
           <div class="space-y-4 mb-4">
           ${app.routines.map(r => `
-            <div class="bg-white rounded-lg shadow-lg p-4">
+            <div class="pc-card p-4">
               <div class="flex justify-between mb-2">
                 <div>
                   <h3 class="font-bold text-lg">${r.name}</h3>
@@ -415,14 +608,14 @@
                   <button onclick="deleteRoutine('${r.id}'); return false;" class="p-2 hover:bg-gray-100 rounded">🗑️</button>
                 </div>
               </div>
-              <button onclick="startRoutine('${r.id}')" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-2 font-semibold">Start</button>
+              <button onclick="startRoutine('${r.id}')" class="w-full pc-btn pc-btn-primary">Start</button>
             </div>
           `).join('')}
           </div>
         `}
-        
+
         ${canAdd ? `
-          <button onclick="newRoutine()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-semibold">+ Create Routine</button>
+          <button onclick="newRoutine()" class="w-full pc-btn pc-btn-secondary">+ Create Routine</button>
         ` : `
           <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
             <p class="text-orange-800">Free: 3 routines max. Upgrade to Pro!</p>
@@ -433,10 +626,10 @@
 
     function renderPlansView(root) {
       const canAdd = app.isPro || app.plans.length < 1;
-      
+
       root.innerHTML = `
         <div class="flex justify-between items-center mb-6">
-          <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+          <button onclick="goTo('home')" class="pc-link">← Back</button>
           <h2 class="text-2xl font-bold">Training Plans</h2>
           <div class="w-16"></div>
         </div>
@@ -445,14 +638,14 @@
           <div class="bg-red-50 border-2 border-red-500 rounded-lg p-4 mb-4">
             <p class="font-bold text-red-900 mb-3">Delete "${app.deletePlanConfirm.name}"?</p>
             <div class="flex gap-3">
-              <button onclick="confirmDeletePlan()" class="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 font-semibold">Delete</button>
-              <button onclick="cancelDeletePlan()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-2 font-semibold">Cancel</button>
+              <button onclick="confirmDeletePlan()" class="flex-1 pc-btn pc-btn-danger">Delete</button>
+              <button onclick="cancelDeletePlan()" class="flex-1 pc-btn pc-btn-secondary">Cancel</button>
             </div>
           </div>
         ` : ''}
-        
+
         ${app.plans.length === 0 ? `
-          <div class="bg-white rounded-lg shadow-lg p-8 text-center mb-4">
+          <div class="pc-card p-8 text-center mb-4">
             <p class="text-gray-600">No training plans yet!</p>
           </div>
         ` : `
@@ -461,7 +654,7 @@
             if (!p.progress) {
               p.progress = { minutes: 0, balls: 0, sessions: 0 };
             }
-            
+
             let current = 0;
             if (p.goalType === 'minutes') {
               current = p.progress.minutes;
@@ -470,15 +663,15 @@
             } else if (p.goalType === 'sessions') {
               current = p.progress.sessions;
             }
-            
+
             const progress = Math.min((current / p.goalValue) * 100, 100);
             const isActive = app.activePlanId === p.id;
-            
+
             return `
-              <div class="bg-white rounded-lg shadow-lg p-4 ${isActive ? 'border-2 border-green-600' : ''}">
+              <div class="pc-card p-4 ${isActive ? 'border-2 border-[#2F6F4E]' : ''}">
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
-                    <h3 class="font-bold text-lg">${p.name} ${isActive ? '<span class="text-green-600 text-sm">● Active</span>' : ''}</h3>
+                    <h3 class="font-bold text-lg">${p.name} ${isActive ? '<span class="text-[#2F6F4E] text-sm">● Active</span>' : ''}</h3>
                     <p class="text-sm text-gray-600">${p.goalValue} ${p.goalType} • Started ${new Date(p.startDate).toLocaleDateString()}</p>
                   </div>
                   <div class="flex gap-2">
@@ -487,7 +680,7 @@
                     <button onclick="deletePlan('${p.id}'); return false;" class="p-2 hover:bg-gray-100 rounded">🗑️</button>
                   </div>
                 </div>
-                
+
                 <div class="mb-3">
                   <div class="flex justify-between text-sm mb-1">
                     <span class="text-gray-600">${current} / ${p.goalValue} ${p.goalType}</span>
@@ -497,20 +690,20 @@
                     <div class="bg-green-600 h-3 rounded-full transition-all" style="width:${progress}%"></div>
                   </div>
                 </div>
-                
+
                 ${!isActive ? `
-                  <button onclick="setActivePlan('${p.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 font-semibold">Set as Active</button>
+                  <button onclick="setActivePlan('${p.id}')" class="w-full pc-btn pc-btn-secondary">Set as Active</button>
                 ` : `
-                  <button onclick="deactivatePlan()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-2 font-semibold">Deactivate</button>
+                  <button onclick="deactivatePlan()" class="w-full pc-btn pc-btn-secondary">Deactivate</button>
                 `}
               </div>
             `;
           }).join('')}
           </div>
         `}
-        
+
         ${canAdd ? `
-          <button onclick="newPlan()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-semibold">+ Create Training Plan</button>
+          <button onclick="newPlan()" class="w-full pc-btn pc-btn-secondary">+ Create Training Plan</button>
         ` : `
           <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
             <p class="text-orange-800">Free: 1 plan max. Upgrade to Pro for unlimited!</p>
@@ -522,7 +715,7 @@
     function renderSettingsView(root) {
       root.innerHTML = `
         <div class="flex justify-between items-center mb-6">
-          <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+          <button onclick="goTo('home')" class="pc-link">← Back</button>
           <h2 class="text-2xl font-bold">Settings</h2>
           <div class="w-16"></div>
         </div>
@@ -532,13 +725,13 @@
             <p class="font-bold text-red-900 mb-2">Clear All Data?</p>
             <p class="text-sm text-red-800 mb-3">This will delete all routines, plans, and history. This cannot be undone!</p>
             <div class="flex gap-3">
-              <button onclick="confirmClearStorage()" class="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 font-semibold">Clear All Data</button>
-              <button onclick="cancelClearStorage()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-2 font-semibold">Cancel</button>
+              <button onclick="confirmClearStorage()" class="flex-1 pc-btn pc-btn-danger">Clear All Data</button>
+              <button onclick="cancelClearStorage()" class="flex-1 pc-btn pc-btn-secondary">Cancel</button>
             </div>
           </div>
         ` : ''}
-        
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+
+        <div class="pc-card p-6 mb-4">
           <div class="flex justify-between items-center mb-4">
             <div>
               <h3 class="font-bold">Pro Version</h3>
@@ -548,7 +741,7 @@
               ${app.isPro ? '✓ Active' : 'Enable'}
             </button>
           </div>
-          
+
           <div class="text-sm text-gray-600 space-y-1">
             <p>• Unlimited routines (Free: 3)</p>
             <p>• Routines any length (Free: 30 min max)</p>
@@ -558,7 +751,7 @@
           </div>
         </div>
 
-        <button onclick="clearStorage()" class="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-3 font-semibold">
+        <button onclick="clearStorage()" class="w-full pc-btn pc-btn-danger">
           Clear All Data & Reset
         </button>
       `;
@@ -578,19 +771,19 @@
     window.saveRoutine = () => {
       const name = document.getElementById('rname').value.trim();
       if (!name) return alert('Name required');
-      
+
       const segments = [];
       document.querySelectorAll('.segment-row').forEach((row, i) => {
         const n = row.querySelector('.seg-name').value.trim();
         const m = parseInt(row.querySelector('.seg-mins').value) || 0;
         if (n && m > 0) segments.push({ name: n, minutes: m });
       });
-      
+
       if (segments.length === 0) return alert('Add at least one segment');
-      
+
       const total = segments.reduce((s, seg) => s + seg.minutes, 0);
       if (!app.isPro && total > 30) return alert('Free version limited to 30 minutes');
-      
+
       if (app.editRoutine.isNew) {
         app.routines.push({ id: app.editRoutine.id, name, segments });
       } else {
@@ -598,7 +791,7 @@
         r.name = name;
         r.segments = segments;
       }
-      
+
       app.editRoutine = null;
       app.view = 'routines';
       save();
@@ -714,7 +907,7 @@
     window.resetStats = (period) => {
       const now = new Date();
       let cutoffDate;
-      
+
       if (period === 'week') {
         cutoffDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
       } else if (period === 'month') {
@@ -725,7 +918,7 @@
         render();
         return;
       }
-      
+
       app.history = app.history.filter(h => new Date(h.date) < cutoffDate);
       save();
       render();
@@ -736,33 +929,33 @@
       console.log('=== RENDER START ===');
       console.log('Current view:', app.view);
       console.log('deleteConfirm:', app.deleteConfirm);
-      
+
       const root = document.getElementById('app');
-      
+
       if (!root) {
         console.error('Root element not found!');
         return;
       }
-      
+
       // Clean up any existing overlay
       const existingOverlay = document.querySelector('.upgrade-overlay');
       if (existingOverlay) {
         existingOverlay.remove();
       }
-      
+
       console.log('About to check view conditions...');
-      
+
       if (app.view === 'home') {
         console.log('>> MATCHED: home');
         const latestNote = app.history[0]?.notes || '';
         const activePlan = app.plans.find(p => p.id === app.activePlanId);
-        
+
         let planProgress = null;
         if (activePlan) {
           if (!activePlan.progress) {
             activePlan.progress = { minutes: 0, balls: 0, sessions: 0 };
           }
-          
+
           let current = 0;
           if (activePlan.goalType === 'minutes') {
             current = activePlan.progress.minutes;
@@ -771,36 +964,37 @@
           } else if (activePlan.goalType === 'sessions') {
             current = activePlan.progress.sessions;
           }
-          
+
           planProgress = {
             current,
             goal: activePlan.goalValue,
             percent: Math.min((current / activePlan.goalValue) * 100, 100)
           };
         }
-        
+
         root.innerHTML = `
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+          <div class="pc-card p-6 mb-4">
             <div class="flex justify-between items-center">
-              <h1 class="text-3xl font-bold text-green-700">Practice Caddie</h1>
+              <h1 class="text-3xl font-bold text-[#2F6F4E]">Practice Caddie</h1>
               <button onclick="goTo('settings')" class="p-2 hover:bg-gray-100 rounded">⚙️</button>
             </div>
+            <div class="pc-accent-rule mt-4"></div>
             ${!app.isPro ? '<div class="text-sm text-orange-600 font-medium mt-2">Free Version</div>' : ''}
           </div>
-          
+
           ${latestNote ? `
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r-lg">
-              <p class="text-sm font-medium text-blue-900">Last Session Note:</p>
-              <p class="text-sm text-blue-800 mt-1">${latestNote}</p>
+            <div class="bg-[#EEF4F0] border-l-4 border-[#2F6F4E] p-4 mb-4 rounded-r-lg">
+              <p class="text-sm font-medium text-[#1F2A24]">Last Session Note:</p>
+              <p class="text-sm text-[#5F6D64] mt-1">${latestNote}</p>
             </div>
           ` : ''}
 
           ${activePlan ? `
-            <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+            <div class="pc-card p-4 mb-4">
               <div class="flex justify-between items-start mb-3">
                 <div>
                   <h3 class="font-bold text-gray-800">Active Training Plan</h3>
-                  <p class="text-lg font-semibold text-green-700">${activePlan.name}</p>
+                  <p class="text-lg font-semibold text-[#2F6F4E]">${activePlan.name}</p>
                 </div>
                 <button onclick="deactivatePlan()" class="text-sm text-red-600 hover:underline">Deactivate</button>
               </div>
@@ -815,53 +1009,57 @@
               </div>
             </div>
           ` : ''}
-          
-          <div class="grid grid-cols-2 gap-4">
-            <button onclick="goTo('routines')" class="bg-green-600 hover:bg-green-700 text-white rounded-lg p-6 text-center shadow-lg">
-              <div class="text-3xl mb-2">▶️</div>
+
+                    <div class="grid grid-cols-2 gap-4">
+            <button onclick="goTo('routines')" class="pc-tile">
+              <div class="pc-tile-icon">▶</div>
               <div class="font-semibold">Routines</div>
+              <div class="text-sm text-[#5F6D64] mt-1">Build & run practice</div>
             </button>
-            <button onclick="goTo('plans')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
-              <div class="text-3xl mb-2">🎯</div>
+            <button onclick="goTo('plans')" class="pc-tile">
+              <div class="pc-tile-icon">⛳</div>
               <div class="font-semibold">Training Plans</div>
+              <div class="text-sm text-[#5F6D64] mt-1">Track progress</div>
             </button>
-            <button onclick="goTo('history')" class="bg-purple-600 hover:bg-purple-700 text-white rounded-lg p-6 text-center shadow-lg">
-              <div class="text-3xl mb-2">📋</div>
+            <button onclick="goTo('history')" class="pc-tile">
+              <div class="pc-tile-icon">🗒</div>
               <div class="font-semibold">History</div>
+              <div class="text-sm text-[#5F6D64] mt-1">Sessions & notes</div>
             </button>
-            <button onclick="goTo('stats')" class="bg-orange-600 hover:bg-orange-700 text-white rounded-lg p-6 text-center shadow-lg">
-              <div class="text-3xl mb-2">📊</div>
+            <button onclick="goTo('stats')" class="pc-tile">
+              <div class="pc-tile-icon">📈</div>
               <div class="font-semibold">Statistics</div>
+              <div class="text-sm text-[#5F6D64] mt-1">Trends over time</div>
             </button>
           </div>
-          
+
           ${!app.isPro ? `
             <div class="mt-6 text-center">
-              <button onclick="showUpgrade()" class="text-blue-600 hover:text-blue-700 font-semibold underline">
+              <button onclick="showUpgrade()" class="pc-link font-semibold underline">
                 Upgrade to Pro →
               </button>
             </div>
           ` : ''}
         `;
       }
-      
+
       else if (app.view === 'routines') {
         const canAdd = app.isPro || app.routines.length < 3;
         root.innerHTML = `
           <div class="flex justify-between items-center mb-6">
-            <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+            <button onclick="goTo('home')" class="pc-link">← Back</button>
             <h2 class="text-2xl font-bold">Routines</h2>
             <div class="w-16"></div>
           </div>
-          
+
           ${app.routines.length === 0 ? `
-            <div class="bg-white rounded-lg shadow-lg p-8 text-center mb-4">
+            <div class="pc-card p-8 text-center mb-4">
               <p class="text-gray-600">No routines yet!</p>
             </div>
           ` : `
             <div class="space-y-4 mb-4">
               ${app.routines.map(r => `
-                <div class="bg-white rounded-lg shadow-lg p-4">
+                <div class="pc-card p-4">
                   <div class="flex justify-between mb-2">
                     <div>
                       <h3 class="font-bold text-lg">${r.name}</h3>
@@ -872,14 +1070,14 @@
                       <button onclick="deleteRoutine('${r.id}')" class="p-2 hover:bg-gray-100 rounded">🗑️</button>
                     </div>
                   </div>
-                  <button onclick="startRoutine('${r.id}')" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-2 font-semibold">Start</button>
+                  <button onclick="startRoutine('${r.id}')" class="w-full pc-btn pc-btn-primary">Start</button>
                 </div>
               `).join('')}
             </div>
           `}
-          
+
           ${canAdd ? `
-            <button onclick="newRoutine()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-semibold">+ Create Routine</button>
+            <button onclick="newRoutine()" class="w-full pc-btn pc-btn-secondary">+ Create Routine</button>
           ` : `
             <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
               <p class="text-orange-800">Free: 3 routines max. Upgrade to Pro!</p>
@@ -887,172 +1085,172 @@
           `}
         `;
       }
-      
+
       else if (app.view === 'editRoutine') {
         console.log('HIT EDIT ROUTINE BLOCK');
         const total = (app.editRoutine.segments || []).reduce((s, seg) => s + seg.minutes, 0);
         const exceeds = !app.isPro && total > 30;
         root.innerHTML = `
           <h2 class="text-2xl font-bold mb-6">${app.editRoutine.isNew ? 'Create' : 'Edit'} Routine</h2>
-          
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+
+          <div class="pc-card p-6 mb-4">
             <label class="block text-sm font-medium mb-2">Name</label>
-            <input type="text" id="rname" value="${app.editRoutine.name}" class="w-full border rounded-lg px-3 py-2 mb-4" placeholder="Monday Practice">
-            
+            <input type="text" id="rname" value="${app.editRoutine.name}" class="pc-input pc-focus mb-4" placeholder="Monday Practice">
+
             <div class="border-t pt-4 mb-4">
               <h3 class="font-bold mb-3">Quick Setup</h3>
               <div class="grid grid-cols-2 gap-3 mb-3">
                 <div>
                   <label class="block text-xs font-medium mb-1">Total Minutes</label>
-                  <input type="number" id="quickTotal" value="${app.quickSetup.totalMinutes}" class="w-full border rounded px-3 py-2" min="5">
+                  <input type="number" id="quickTotal" value="${app.quickSetup.totalMinutes}" class="pc-input pc-focus" min="5">
                 </div>
                 <div>
                   <label class="block text-xs font-medium mb-1">Number of Drills</label>
-                  <input type="number" id="quickDrills" value="${app.quickSetup.numDrills}" class="w-full border rounded px-3 py-2" min="1">
+                  <input type="number" id="quickDrills" value="${app.quickSetup.numDrills}" class="pc-input pc-focus" min="1">
                 </div>
               </div>
-              <button onclick="quickGenerate()" class="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 text-sm font-medium">
+              <button onclick="quickGenerate()" class="w-full pc-btn pc-btn-secondary text-sm">
                 Generate Routine
               </button>
             </div>
-            
+
             <div class="flex justify-between mb-4">
               <h3 class="font-bold">Segments</h3>
               <span class="text-sm ${exceeds ? 'text-red-600 font-bold' : 'text-gray-600'}">
                 Total: ${total} min ${exceeds ? '(Max 30 for Free!)' : ''}
               </span>
             </div>
-            
+
             <div class="space-y-3 mb-4">
               ${(app.editRoutine.segments || []).map((s, i) => `
                 <div class="segment-row flex gap-2 bg-gray-50 p-3 rounded-lg">
-                  <input type="text" class="seg-name flex-1 border rounded px-2 py-1" value="${s.name}" placeholder="Segment name">
-                  <input type="number" class="seg-mins w-20 border rounded px-2 py-1" value="${s.minutes}" min="1">
-                  <span class="text-sm text-gray-600 self-center">min</span>
-                  <button onclick="removeSegment(${i})" class="p-1 hover:bg-gray-200 rounded">🗑️</button>
+                  <input type="text" class="seg-name pc-input pc-focus" value="${s.name}" placeholder="Segment name" style="flex: 1 1 0; min-width: 0;">
+                  <input type="number" class="seg-mins pc-input pc-focus" value="${s.minutes}" min="1" style="width: 3.5rem; flex: 0 0 auto;">
+                  <span class="text-sm text-gray-600 self-center" style="flex: 0 0 auto;">min</span>
+                  <button onclick="removeSegment(${i})" class="p-1 hover:bg-gray-200 rounded" style="flex: 0 0 auto;">🗑️</button>
                 </div>
               `).join('')}
             </div>
-            
+
             <button onclick="addSegment()" class="w-full border-2 border-dashed border-gray-300 rounded-lg py-2 hover:border-gray-400">+ Add Segment Manually</button>
           </div>
-          
+
           <div class="flex gap-3">
-            <button onclick="saveRoutine()" class="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold">Save</button>
-            <button onclick="goTo('routines')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-3 font-semibold">Cancel</button>
+            <button onclick="saveRoutine()" class="flex-1 pc-btn pc-btn-primary">Save</button>
+            <button onclick="goTo('routines')" class="flex-1 pc-btn pc-btn-secondary">Cancel</button>
           </div>
         `;
       }
-      
+
       else if (app.view === 'session') {
         console.log('HIT SESSION BLOCK');
         const seg = app.session.segments[app.segmentIndex];
         const m = Math.floor(app.timeLeft / 60);
         const s = app.timeLeft % 60;
         root.innerHTML = `
-          <div class="min-h-screen bg-gradient-to-br from-green-600 to-blue-600 flex items-center justify-center p-4 -m-4">
-            <div class="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full">
+          <div class="min-h-screen pc-session-bg flex items-center justify-center p-4 -m-4">
+            <div class="pc-card-strong p-8 max-w-md w-full">
               <h2 class="text-2xl font-bold text-center mb-2">${app.session.name}</h2>
               <div class="text-center text-gray-600 mb-6">Segment ${app.segmentIndex + 1} of ${app.session.segments.length}</div>
-              
-              <div class="bg-green-50 rounded-lg p-6 mb-6">
+
+              <div class="bg-[#EEF4F0] rounded-lg p-6 mb-6">
                 <h3 class="text-xl font-semibold text-center mb-4">${seg.name}</h3>
-                <div class="text-6xl font-bold text-center text-green-700">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>
+                <div class="text-6xl font-bold text-center text-[#2F6F4E]">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>
               </div>
-              
+
               <div class="space-y-3">
-                <button onclick="skipSegment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-semibold">⏭️ Skip</button>
-                <button onclick="endSession()" class="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-3 font-semibold">⏹️ End</button>
+                <button onclick="skipSegment()" class="w-full pc-btn pc-btn-secondary">⏭️ Skip</button>
+                <button onclick="endSession()" class="w-full pc-btn pc-btn-danger">⏹️ End</button>
               </div>
-              
+
               <div class="mt-6 pt-6 border-t text-sm">
                 ${app.session.segments.map((sg, i) => `
-                  <div class="py-1 ${i === app.segmentIndex ? 'font-bold text-green-700' : ''} ${i < app.segmentIndex ? 'line-through text-gray-400' : ''}">${sg.name} (${sg.minutes} min)</div>
+                  <div class="py-1 ${i === app.segmentIndex ? 'font-bold text-[#2F6F4E]' : ''} ${i < app.segmentIndex ? 'line-through text-gray-400' : ''}">${sg.name} (${sg.minutes} min)</div>
                 `).join('')}
               </div>
             </div>
           </div>
         `;
       }
-      
+
       else if (app.view === 'complete') {
         console.log('HIT COMPLETE BLOCK');
         root.innerHTML = `
-          <div class="bg-white rounded-lg shadow-lg p-6 mt-8 max-w-md mx-auto">
-            <h2 class="text-2xl font-bold text-center mb-6 text-green-700">Session Complete!</h2>
-            
+          <div class="pc-card p-6 mt-8 max-w-md mx-auto">
+            <h2 class="text-2xl font-bold text-center mb-6 text-[#2F6F4E]">Session Complete!</h2>
+
             <div class="space-y-4 mb-6">
               <div>
                 <label class="block text-sm font-medium mb-2">Balls Hit</label>
-                <input type="number" id="balls" class="w-full border rounded-lg px-3 py-2" placeholder="0">
+                <input type="number" id="balls" class="pc-input pc-focus" placeholder="0">
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium mb-2">Rate (0-5)</label>
                 <div class="flex gap-2 justify-center">
                   ${[0,1,2,3,4,5].map(v => `<button onclick="selectRating(${v})" data-rating="${v}" class="w-12 h-12 rounded-lg border-2 font-bold bg-white text-gray-600 border-gray-300">${v}</button>`).join('')}
                 </div>
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium mb-2">Notes</label>
-                <textarea id="notes" class="w-full border rounded-lg px-3 py-2 h-24" placeholder="How did it go?"></textarea>
+                <textarea id="notes" class="pc-input pc-focus h-24" placeholder="How did it go?"></textarea>
               </div>
             </div>
-            
+
             <div class="flex gap-3">
-              <button onclick="saveSession()" class="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold">Save</button>
-              <button onclick="discardSession()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-3 font-semibold">Discard</button>
+              <button onclick="saveSession()" class="flex-1 pc-btn pc-btn-primary">Save</button>
+              <button onclick="discardSession()" class="flex-1 pc-btn pc-btn-secondary">Discard</button>
             </div>
           </div>
         `;
       }
-      
+
       else if (app.view === 'plans') {
         console.log('HIT PLANS BLOCK');
         renderPlansView(root);
       }
-      
+
       else if (app.view === 'editPlan') {
         console.log('HIT EDIT PLAN BLOCK');
         root.innerHTML = `
           <h2 class="text-2xl font-bold mb-6">${app.editPlan.isNew ? 'Create' : 'Edit'} Training Plan</h2>
-          
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+
+          <div class="pc-card p-6 mb-4">
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium mb-2">Plan Name</label>
-                <input type="text" id="planName" value="${app.editPlan.name}" class="w-full border rounded-lg px-3 py-2" placeholder="e.g. January Goal">
+                <input type="text" id="planName" value="${app.editPlan.name}" class="pc-input pc-focus" placeholder="e.g. January Goal">
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium mb-2">Goal Type</label>
-                <select id="goalType" class="w-full border rounded-lg px-3 py-2">
+                <select id="goalType" class="pc-input pc-focus">
                   <option value="minutes" ${app.editPlan.goalType === 'minutes' ? 'selected' : ''}>Minutes</option>
                   <option value="balls" ${app.editPlan.goalType === 'balls' ? 'selected' : ''}>Balls</option>
                   <option value="sessions" ${app.editPlan.goalType === 'sessions' ? 'selected' : ''}>Sessions</option>
                 </select>
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium mb-2">Goal Value</label>
-                <input type="number" id="goalValue" value="${app.editPlan.goalValue}" class="w-full border rounded-lg px-3 py-2" min="1">
+                <input type="number" id="goalValue" value="${app.editPlan.goalValue}" class="pc-input pc-focus" min="1">
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium mb-2">Start Date</label>
-                <input type="date" id="startDate" value="${app.editPlan.startDate}" class="w-full border rounded-lg px-3 py-2">
+                <input type="date" id="startDate" value="${app.editPlan.startDate}" class="pc-input pc-focus">
               </div>
             </div>
           </div>
-          
+
           <div class="flex gap-3">
-            <button onclick="savePlan()" class="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold">Save</button>
-            <button onclick="goTo('plans')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg py-3 font-semibold">Cancel</button>
+            <button onclick="savePlan()" class="flex-1 pc-btn pc-btn-primary">Save</button>
+            <button onclick="goTo('plans')" class="flex-1 pc-btn pc-btn-secondary">Cancel</button>
           </div>
         `;
       }
-      
+
       else if (app.view === 'stats') {
         console.log('HIT STATS BLOCK');
         const now = new Date();
@@ -1076,7 +1274,7 @@
 
         root.innerHTML = `
           <div class="flex justify-between items-center mb-6">
-            <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+            <button onclick="goTo('home')" class="pc-link">← Back</button>
             <h2 class="text-2xl font-bold">Statistics</h2>
             <div class="w-16"></div>
           </div>
@@ -1087,7 +1285,7 @@
             </div>
           ` : ''}
 
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+          <div class="pc-card p-6 mb-4">
             <div class="overflow-x-auto">
               <table class="w-full text-center">
                 <thead>
@@ -1101,9 +1299,9 @@
                 <tbody>
                   <tr class="border-b border-gray-200">
                     <td class="py-3 px-2 text-left font-medium text-gray-700">Balls</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-green-600">${stats.week.balls}</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-green-600">${stats.month.balls}</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-green-600">${stats.lifetime.balls}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-[#2F6F4E]">${stats.week.balls}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-[#2F6F4E]">${stats.month.balls}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-[#2F6F4E]">${stats.lifetime.balls}</td>
                   </tr>
                   <tr class="border-b border-gray-200 ${blur}">
                     <td class="py-3 px-2 text-left font-medium text-gray-700">Minutes</td>
@@ -1128,69 +1326,69 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-lg shadow-lg p-4">
+          <div class="pc-card p-4">
             <h3 class="font-bold text-gray-800 mb-3">Reset Statistics</h3>
             <div class="grid grid-cols-2 gap-3">
               <button onclick="if(confirm('Delete all sessions from the past 7 days?')) resetStats('week')" class="bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-semibold">Reset 7 Days</button>
               <button onclick="if(confirm('Delete all sessions from the past 30 days?')) resetStats('month')" class="bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-semibold">Reset 30 Days</button>
-              <button onclick="if(confirm('Delete ALL session history? This cannot be undone!')) resetStats('all')" class="col-span-2 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 font-semibold">Reset All History</button>
+              <button onclick="if(confirm('Delete ALL session history? This cannot be undone!')) resetStats('all')" class="col-span-2 pc-btn pc-btn-danger">Reset All History</button>
             </div>
           </div>
         `;
       }
-      
+
       else if (app.view === 'history') {
         console.log('HIT HISTORY BLOCK');
         const visible = app.isPro ? app.history : app.history.slice(0, 3);
         root.innerHTML = `
           <div class="flex justify-between items-center mb-6">
-            <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+            <button onclick="goTo('home')" class="pc-link">← Back</button>
             <h2 class="text-2xl font-bold">History</h2>
             <div class="w-16"></div>
           </div>
-          
+
           ${!app.isPro && app.history.length > 3 ? `
             <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4 text-center">
               <p class="text-orange-800">Free: last 3 sessions. Upgrade for full history!</p>
             </div>
           ` : ''}
-          
+
           ${visible.length === 0 ? `
-            <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div class="pc-card p-8 text-center">
               <p class="text-gray-600">No sessions yet!</p>
             </div>
           ` : `
             <div class="space-y-4">
               ${visible.map(h => `
-                <div class="bg-white rounded-lg shadow-lg p-4">
+                <div class="pc-card p-4">
                   <div class="flex justify-between mb-2">
                     <div>
                       <h3 class="font-bold">${h.routineName}</h3>
                       <p class="text-sm text-gray-600">${new Date(h.date).toLocaleDateString()}</p>
                     </div>
                     <div class="text-right">
-                      <div class="font-bold text-green-600">${h.ballsHit} balls</div>
+                      <div class="font-bold text-[#2F6F4E]">${h.ballsHit} balls</div>
                       <div class="text-sm text-gray-600">${h.totalMinutes} min • ⭐${h.rating}</div>
                     </div>
                   </div>
-                  ${h.notes ? `<p class="text-sm text-gray-700 mt-2 p-2 bg-blue-50 rounded">${h.notes}</p>` : ''}
+                  ${h.notes ? `<p class="text-sm text-gray-700 mt-2 p-2 bg-[#EEF4F0] rounded">${h.notes}</p>` : ''}
                 </div>
               `).join('')}
             </div>
           `}
         `;
       }
-      
+
       else if (app.view === 'settings') {
         console.log('HIT SETTINGS BLOCK');
         root.innerHTML = `
           <div class="flex justify-between items-center mb-6">
-            <button onclick="goTo('home')" class="text-blue-600 hover:underline">← Back</button>
+            <button onclick="goTo('home')" class="pc-link">← Back</button>
             <h2 class="text-2xl font-bold">Settings</h2>
             <div class="w-16"></div>
           </div>
-          
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+
+          <div class="pc-card p-6 mb-4">
             <div class="flex justify-between items-center mb-4">
               <div>
                 <h3 class="font-bold">Pro Version</h3>
@@ -1200,7 +1398,7 @@
                 ${app.isPro ? '✓ Active' : 'Enable'}
               </button>
             </div>
-            
+
             <div class="text-sm text-gray-600 space-y-1">
               <p>• Unlimited routines (Free: 3)</p>
               <p>• Routines any length (Free: 30 min max)</p>
@@ -1208,7 +1406,7 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+          <div class="pc-card p-6 mb-4">
             <h3 class="font-bold mb-3">About Practice Caddie</h3>
             <div class="text-sm text-gray-700 space-y-2">
               <p><strong>Version:</strong> 1.1</p>
@@ -1216,7 +1414,7 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+          <div class="pc-card p-6 mb-4">
             <h3 class="font-bold mb-3">Contact & Support</h3>
             <div class="text-sm text-gray-700 space-y-2">
               <p><strong>Email:</strong> support@practicecaddie.com</p>
@@ -1225,7 +1423,7 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+          <div class="pc-card p-6 mb-4">
             <h3 class="font-bold mb-3">Privacy Policy</h3>
             <div class="text-sm text-gray-700 space-y-2">
               <p><strong>Data Storage:</strong> All practice data is stored locally on your device. We do not collect, transmit, or store any personal information on external servers.</p>
@@ -1236,7 +1434,7 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+          <div class="pc-card p-6 mb-4">
             <h3 class="font-bold mb-3">Terms of Service</h3>
             <div class="text-sm text-gray-700 space-y-2">
               <p>By using Practice Caddie, you agree to use the app for lawful purposes only. The app is provided "as is" without warranties of any kind.</p>
@@ -1244,7 +1442,7 @@
             </div>
           </div>
 
-          <button onclick="clearStorage()" class="w-full bg-red-600 hover:bg-red-700 text-white rounded-lg py-3 font-semibold mb-4">
+          <button onclick="clearStorage()" class="w-full pc-btn pc-btn-danger mb-4">
             Clear All Data & Reset
           </button>
 
@@ -1253,7 +1451,7 @@
           </div>
         `;
       }
-      
+
       // Upgrade overlay
       if (app.showUpgradeOverlay) {
         const overlay = document.createElement('div');
@@ -1261,14 +1459,14 @@
         overlay.onclick = (e) => {
           if (e.target === overlay) closeUpgrade();
         };
-        
+
         overlay.innerHTML = `
-          <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6" onclick="event.stopPropagation()">
+          <div class="pc-card-strong max-w-md w-full p-6" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-2xl font-bold text-gray-800">Upgrade to Pro</h2>
               <button onclick="closeUpgrade()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
             </div>
-            
+
             <div class="mb-6">
               <h3 class="font-bold text-gray-800 mb-3">Free Version</h3>
               <div class="text-sm text-gray-600 space-y-2">
@@ -1278,9 +1476,9 @@
                 <p>✓ Ball count tracking</p>
               </div>
             </div>
-            
+
             <div class="mb-6">
-              <h3 class="font-bold text-green-700 mb-3">Pro Version</h3>
+              <h3 class="font-bold text-[#2F6F4E] mb-3">Pro Version</h3>
               <div class="text-sm text-gray-700 space-y-2">
                 <p>✓ <strong>Unlimited</strong> custom routines</p>
                 <p>✓ <strong>Unlimited</strong> routine length</p>
@@ -1290,23 +1488,23 @@
                 <p>✓ Session ratings and notes</p>
               </div>
             </div>
-            
+
             <div class="space-y-3">
-              <button onclick="upgradeToPro()" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-semibold">
+              <button onclick="upgradeToPro()" class="w-full pc-btn pc-btn-primary">
                 Upgrade Now
               </button>
-              <button onclick="closeUpgrade()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg py-3 font-semibold">
+              <button onclick="closeUpgrade()" class="w-full pc-btn pc-btn-secondary">
                 Maybe Later
               </button>
             </div>
           </div>
         `;
-        
+
         document.body.appendChild(overlay);
       }
     }
 
     load();
-  </script>
+</script>
 </body>
 </html>

@@ -496,6 +496,8 @@
     };
 
     window.saveSession = () => {
+      if (!app.session) return;
+
       const balls = parseInt(document.getElementById('balls').value) || 0;
       const rating = parseInt(document.querySelector('.rating-selected')?.dataset.rating || 0);
       const notes = document.getElementById('notes').value;

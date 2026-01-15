@@ -563,8 +563,22 @@
       event.target.className = 'w-12 h-12 rounded-lg border-2 font-bold bg-green-600 text-white border-[#2F6F4E] rating-selected';
     };
 
+    function nextDefaultName(items, label) {
+      const esc = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp('^' + esc + ' #(\\d+)$');
+      const used = new Set();
+      items.forEach(it => {
+        const m = (it.name || '').match(re);
+        if (m) used.add(parseInt(m[1], 10));
+      });
+      let n = 1;
+      while (used.has(n)) n++;
+      return `${label} #${n}`;
+    }
+
+
     window.newRoutine = () => {
-      app.editRoutine = { id: Date.now().toString(), name: '', segments: [], isNew: true };
+      app.editRoutine = { id: Date.now().toString(), name: nextDefaultName(app.routines, 'Routine'), segments: [], isNew: true };
       app.view = 'editRoutine';
       render();
     };
@@ -691,6 +705,15 @@
             <p class="text-orange-800">Free: 3 routines max. Upgrade to Pro!</p>
           </div>
         `}
+
+        ${!app.isPro ? `
+          <div class="mt-6 text-center">
+            <button onclick="showUpgrade()" class="pc-link font-semibold underline">
+              For unlimited Routines, upgrade to Pro →
+            </button>
+          </div>
+        ` : ''}
+
       `;
     }
 
@@ -774,11 +797,15 @@
 
         ${canAdd ? `
           <button onclick="newPlan()" class="w-full pc-btn pc-btn-secondary">+ Create Training Plan</button>
-        ` : `
-          <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
-            <p class="text-orange-800">Free: 1 plan max. Upgrade to Pro for unlimited!</p>
+        ` : ''}
+
+        ${!app.isPro ? `
+          <div class="mt-6 text-center">
+            <button onclick="showUpgrade()" class="pc-link font-semibold underline">
+              For unlimited Training Plans, upgrade to Pro →
+            </button>
           </div>
-        `}
+        ` : ''}
       `;
     }
 
@@ -872,7 +899,7 @@
     window.newPlan = () => {
       app.editPlan = {
         id: Date.now().toString(),
-        name: '',
+        name: nextDefaultName(app.plans, 'Training Plan'),
         goalType: 'minutes',
         goalValue: 300,
         startDate: new Date().toISOString().split('T')[0],
@@ -1187,6 +1214,14 @@
               <p class="text-orange-800">Free: 3 routines max. Upgrade to Pro!</p>
             </div>
           `}
+
+          ${!app.isPro ? `
+              <div class="mt-6 text-center">
+                <button onclick="showUpgrade()" class="pc-link font-semibold underline">
+                  For unlimited Routines, upgrade to Pro →
+                </button>
+              </div>
+            ` : ''}
         `;
       }
 
@@ -1393,7 +1428,7 @@
           }))
         };
 
-        const blur = !app.isPro ? 'filter blur-sm' : '';
+        const blur = !app.isPro ? 'filter blur' : '';
 
         root.innerHTML = `
           <div class="flex justify-between items-center mb-6">
@@ -1401,12 +1436,6 @@
             <h2 class="text-2xl font-bold">Statistics</h2>
             <div class="w-16"></div>
           </div>
-
-          ${!app.isPro ? `
-            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4 text-center">
-              <p class="text-orange-800">Free users see balls only. Upgrade to Pro for full statistics!</p>
-            </div>
-          ` : ''}
 
           <div class="pc-card p-6 mb-4">
             <div class="overflow-x-auto">
@@ -1426,23 +1455,23 @@
                     <td class="py-3 px-2 text-2xl font-bold text-[#2F6F4E]">${stats.month.balls}</td>
                     <td class="py-3 px-2 text-2xl font-bold text-[#2F6F4E]">${stats.lifetime.balls}</td>
                   </tr>
-                  <tr class="border-b border-gray-200 ${blur}">
+                  <tr class="border-b border-gray-200">
                     <td class="py-3 px-2 text-left font-medium text-gray-700">Minutes</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-blue-600">${stats.week.minutes}</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-blue-600">${stats.month.minutes}</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-blue-600">${stats.lifetime.minutes}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-blue-600 ${blur}">${stats.week.minutes}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-blue-600 ${blur}">${stats.month.minutes}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-blue-600 ${blur}">${stats.lifetime.minutes}</td>
                   </tr>
-                  <tr class="border-b border-gray-200 ${blur}">
+                  <tr class="border-b border-gray-200">
                     <td class="py-3 px-2 text-left font-medium text-gray-700">Sessions</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-purple-600">${stats.week.sessions}</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-purple-600">${stats.month.sessions}</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-purple-600">${stats.lifetime.sessions}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-purple-600 ${blur}">${stats.week.sessions}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-purple-600 ${blur}">${stats.month.sessions}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-purple-600 ${blur}">${stats.lifetime.sessions}</td>
                   </tr>
-                  <tr class="${blur}">
+                  <tr>
                     <td class="py-3 px-2 text-left font-medium text-gray-700">Avg Rating</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-orange-600">${stats.week.avgRating}</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-orange-600">${stats.month.avgRating}</td>
-                    <td class="py-3 px-2 text-2xl font-bold text-orange-600">${stats.lifetime.avgRating}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-orange-600 ${blur}">${stats.week.avgRating}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-orange-600 ${blur}">${stats.month.avgRating}</td>
+                    <td class="py-3 px-2 text-2xl font-bold text-orange-600 ${blur}">${stats.lifetime.avgRating}</td>
                   </tr>
                 </tbody>
               </table>
@@ -1468,12 +1497,22 @@
               <button onclick="requestResetStats('lifetime')" class="col-span-2 pc-btn pc-btn-danger">Reset Lifetime Statistics</button>
             </div>
           </div>
+
+        ${!app.isPro ? `
+          <div class="mt-6 text-center">
+            <button onclick="showUpgrade()" class="pc-link font-semibold underline">
+              For all statistics, upgrade to Pro →
+            </button>
+          </div>
+        ` : ''}
+
         `;
       }
 
       else if (app.view === 'history') {
         console.log('HIT HISTORY BLOCK');
         const visible = app.isPro ? app.history : app.history.slice(0, 3);
+        const blur = !app.isPro ? 'filter blur' : '';
         root.innerHTML = `
           <div class="flex justify-between items-center mb-6">
             <button onclick="goTo('home')" class="pc-link">← Back</button>
@@ -1502,10 +1541,10 @@
                     </div>
                     <div class="text-right">
                       <div class="font-bold text-[#2F6F4E]">${h.ballsHit} balls</div>
-                      <div class="text-sm text-gray-600">${h.totalMinutes} min • ⭐${h.rating}</div>
+                      <div class="text-sm text-gray-600">${h.totalMinutes} min • <span class="${blur}">⭐${h.rating}</span></div>
                     </div>
                   </div>
-                  ${h.notes ? `<p class="text-sm text-gray-700 mt-2 p-2 bg-[#EEF4F0] rounded">${h.notes}</p>` : ''}
+                  ${h.notes ? `<p class="text-sm text-gray-700 mt-2 p-2 bg-[#EEF4F0] rounded ${blur}">${h.notes}</p>` : ''}
                 </div>
               `).join('')}
             </div>
@@ -1526,6 +1565,15 @@
 
             <button onclick="requestResetStats('all')" class="w-full pc-btn pc-btn-danger">Reset All History</button>
           </div>
+
+          ${!app.isPro ? `
+              <div class="mt-6 text-center">
+                <button onclick="showUpgrade()" class="pc-link font-semibold underline">
+                  For full, unlimited History, upgrade to Pro →
+                </button>
+              </div>
+            ` : ''}
+
         `;
       }
 
@@ -1552,6 +1600,8 @@
             <div class="text-sm text-gray-600 space-y-1">
               <p>• Unlimited routines (Free: 3)</p>
               <p>• Routines any length (Free: 30 min max)</p>
+              <p>• Unlimited training plans (Free: 1)</p>
+              <p>• Full statistics (Free: balls only)</p>
               <p>• Full history (Free: last 3)</p>
             </div>
           </div>
@@ -1560,15 +1610,14 @@
             <h3 class="font-bold mb-3">About Practice Caddie</h3>
             <div class="text-sm text-gray-700 space-y-2">
               <p><strong>Version:</strong> 1.1</p>
-              <p>Practice Caddie helps golfers structure and track their practice sessions with custom routines, timers, and detailed statistics.</p>
+              <p>Practice Caddie helps golfers structure and track their practice sessions with custom routines, timers, and detailed statistics. Better golf starts with better practice!</p>
             </div>
           </div>
 
           <div class="pc-card p-6 mb-4">
             <h3 class="font-bold mb-3">Contact & Support</h3>
             <div class="text-sm text-gray-700 space-y-2">
-              <p><strong>Email:</strong> support@practicecaddie.com</p>
-              <p><strong>Website:</strong> www.practicecaddie.com</p>
+              <p><strong>Email:</strong> lighthousegolfapps@gmail.com</p>
               <p>For bug reports, feature requests, or general support, please contact us via email.</p>
             </div>
           </div>
@@ -1580,7 +1629,7 @@
               <p><strong>Analytics:</strong> This app does not use analytics or tracking services.</p>
               <p><strong>Permissions:</strong> This app does not require any special device permissions beyond basic storage for saving your practice data.</p>
               <p><strong>Data Deletion:</strong> You can delete all app data at any time using the "Clear All Data & Reset" button below.</p>
-              <p>For our complete privacy policy, visit: www.practicecaddie.com/privacy</p>
+              <p>For our complete privacy policy, visit: https://elightman-golf.github.io/practice-caddie-privacy/</p>
             </div>
           </div>
 
@@ -1588,7 +1637,6 @@
             <h3 class="font-bold mb-3">Terms of Service</h3>
             <div class="text-sm text-gray-700 space-y-2">
               <p>By using Practice Caddie, you agree to use the app for lawful purposes only. The app is provided "as is" without warranties of any kind.</p>
-              <p>For complete terms of service, visit: www.practicecaddie.com/terms</p>
             </div>
           </div>
 
